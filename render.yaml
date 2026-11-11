@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: truthlens
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: TRUTHLENS_PUBLIC
+        value: "1"
+      - key: GROQ_API_KEY      # free key from console.groq.com; leave empty to use the demo backend
+        sync: false
+      - key: TRUTHLENS_RATE_PER_HOUR
+        value: "12"
+      - key: TRUTHLENS_DAILY_CAP
+        value: "300"

@@ -1,0 +1,30 @@
+{"id": "q001", "kind": "answerable", "question": "How much usable capacity does the Helio H15 have?"}
+{"id": "q002", "kind": "answerable", "question": "How long is the standard warranty and when does it start?"}
+{"id": "q003", "kind": "answerable", "question": "Can I install the battery in my bedroom?"}
+{"id": "q004", "kind": "answerable", "question": "How long does a typical H10 installation take?"}
+{"id": "q005", "kind": "answerable", "question": "What do the H10 and the installation cost?"}
+{"id": "q006", "kind": "answerable", "question": "What happens if a cell in the battery gets too hot?"}
+{"id": "q007", "kind": "answerable", "question": "Can the battery be installed outdoors?"}
+{"id": "q008", "kind": "answerable", "question": "How quickly does the battery switch over during a power cut?"}
+{"id": "q009", "kind": "answerable", "question": "Can I transfer the warranty if I sell my house?"}
+{"id": "q010", "kind": "answerable", "question": "What is the return policy?"}
+{"id": "q011", "kind": "partial", "question": "Does the Helio battery work with every solar inverter brand?"}
+{"id": "q012", "kind": "answerable", "question": "Does the Helio battery have cellular connectivity?"}
+{"id": "q013", "kind": "false_premise", "question": "Can I get a 20-year warranty on the Helio battery?"}
+{"id": "q014", "kind": "answerable", "question": "What are the weight and dimensions of the H10?"}
+{"id": "q015", "kind": "answerable", "question": "How noisy is the battery?"}
+{"id": "q016", "kind": "answerable", "question": "What are the phone support hours?"}
+{"id": "q017", "kind": "unanswerable", "question": "Which countries does Helio ship the battery to?"}
+{"id": "q018", "kind": "unanswerable", "question": "Does the Helio app work with Alexa or Google Home?"}
+{"id": "q019", "kind": "partial", "question": "How many years will the battery last?"}
+{"id": "q020", "kind": "answerable", "question": "How much does the extended warranty cost and when must I buy it?"}
+{"id": "q021", "kind": "answerable", "question": "Is the battery safe to use with medical equipment?"}
+{"id": "q022", "kind": "answerable", "question": "How long does grid connection approval take?"}
+{"id": "q023", "kind": "partial", "question": "What chemistry does the battery use and why is it better than other chemistries?"}
+{"id": "q024", "kind": "unanswerable", "question": "How does the Helio battery compare with the Tesla Powerwall?"}
+{"id": "q025", "kind": "unanswerable", "question": "Who founded Helio and when?"}
+{"id": "q026", "kind": "answerable", "question": "What clearances are needed around the unit when installing it?"}
+{"id": "q027", "kind": "partial", "question": "Can the battery charge in freezing weather?"}
+{"id": "q028", "kind": "partial", "question": "What is the round-trip efficiency and how much money will it save me per year?"}
+{"id": "q029", "kind": "answerable", "question": "How many units can I connect together?"}
+{"id": "q030", "kind": "answerable", "question": "What is not covered by the warranty?"}

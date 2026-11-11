@@ -1,0 +1,6 @@
+# Optional: NLI verifier, dense retrieval, cross-encoder reranking, embedding baseline
+torch
+transformers>=4.44
+sentence-transformers>=3.0
+sentencepiece   # DeBERTa-v3 tokenizer (NLI verifier)
+protobuf         # needed by the tokenizer conversion

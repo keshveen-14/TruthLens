@@ -1,0 +1,2259 @@
+<title>TruthLens</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..650&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&display=swap">
+<style>
+/* TruthLens. Quiet and precise: white surfaces, hairline borders, one typeface for the interface and one serif for
+   the text being checked. Colour is reserved for meaning: green backed, amber not in the sources, red contradicted,
+   and a yellow highlighter on the source passage that proves (or fails to prove) a claim. */
+:root {
+  --bg: #F6F7F9;
+  --surface: #FFFFFF;
+  --paper: #FFFFFF;
+  --sunk: #F3F4F7;
+  --ink: #14171F;
+  --ink-2: #4A5261;
+  --ink-3: #7A8393;
+  --line: #E4E7EC;
+  --line-soft: #EEF0F3;
+  --accent: #3955D8;
+  --accent-soft: #EDF0FD;
+  --on-ink: #FFFFFF;
+  --mark: #FFEA7F;
+  --mark-ink: #1C1700;
+  --ok: #12805C;    --ok-soft: #E3F4EC;
+  --warn: #A45F00;  --warn-soft: #FFF0D6;
+  --bad: #BE2149;   --bad-soft: #FCE7ED;
+  --side: #FFFFFF;
+  --shadow-pop: 0 12px 40px -12px rgba(20, 23, 31, .28), 0 2px 6px rgba(20, 23, 31, .06);
+  --ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --text: "Newsreader", Georgia, "Times New Roman", serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --pad: 28px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D0F13; --surface: #14171C; --paper: #14171C; --sunk: #1A1E24; --ink: #ECEEF2; --ink-2: #AEB5C2; --ink-3: #7F8898;
+    --line: #242932; --line-soft: #1C2027; --accent: #8EA3FF; --accent-soft: #1B2240; --on-ink: #0D0F13; --mark: #E6C93F; --mark-ink: #1C1700;
+    --ok: #4FCB9C; --ok-soft: #12302A; --warn: #F0AE45; --warn-soft: #35270E; --bad: #FF7C9B; --bad-soft: #3A1621; --side: #101317;
+    --shadow-pop: 0 16px 48px -12px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .04);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D0F13; --surface: #14171C; --paper: #14171C; --sunk: #1A1E24; --ink: #ECEEF2; --ink-2: #AEB5C2; --ink-3: #7F8898;
+  --line: #242932; --line-soft: #1C2027; --accent: #8EA3FF; --accent-soft: #1B2240; --on-ink: #0D0F13; --mark: #E6C93F; --mark-ink: #1C1700;
+  --ok: #4FCB9C; --ok-soft: #12302A; --warn: #F0AE45; --warn-soft: #35270E; --bad: #FF7C9B; --bad-soft: #3A1621; --side: #101317;
+  --shadow-pop: 0 16px 48px -12px rgba(0, 0, 0, .7), 0 0 0 1px rgba(255, 255, 255, .04);
+  color-scheme: dark;
+}
+body[data-density="compact"] { --pad: 20px; }
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+[hidden] { display: none !important; }
+a { color: inherit; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: 12px; top: -48px; background: var(--ink); color: var(--on-ink); padding: 8px 12px; border-radius: 8px; z-index: 80; }
+.skip:focus { top: 8px; }
+.muted { color: var(--ink-3); }
+kbd { font: 500 11.5px var(--mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; background: var(--surface); color: var(--ink-2); }
+.ico { width: 18px; height: 18px; display: inline-block; flex: none; }
+.ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ------------------------------------------------------------ buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--line);
+  border-radius: 9px; background: var(--surface); cursor: pointer; font-weight: 550; font-size: 14.5px; white-space: nowrap; transition: background .12s, border-color .12s;
+}
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.btn.primary:hover { opacity: .88; }
+.btn.primary[disabled] { opacity: .5; cursor: progress; }
+.btn.quiet { background: transparent; border-color: transparent; color: var(--ink-2); }
+.btn.quiet:hover { background: var(--sunk); color: var(--ink); }
+.btn.small { min-height: 32px; padding: 0 11px; font-size: 13.5px; border-radius: 8px; }
+.icon-btn { width: 36px; height: 36px; display: inline-grid; place-items: center; border: 0; background: transparent; border-radius: 8px; cursor: pointer; color: var(--ink-2); }
+.icon-btn:hover { background: var(--sunk); color: var(--ink); }
+.link { color: var(--accent); text-underline-offset: 3px; font-weight: 550; font-size: 14px; }
+
+/* ------------------------------------------------------------ shell */
+.app { display: grid; grid-template-columns: 244px minmax(0, 1fr); min-height: 100vh; transition: grid-template-columns .18s ease; }
+body.side-collapsed .app { grid-template-columns: 68px minmax(0, 1fr); }
+.side {
+  position: sticky; top: 0; align-self: start; height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 6px; padding: 16px 12px 12px;
+  background: var(--side); border-right: 1px solid var(--line); z-index: 40; overflow: hidden; padding-left: max(12px, env(safe-area-inset-left, 0px));
+}
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 4px 8px 16px; }
+.brand-mark { width: 26px; height: 26px; flex: none; color: var(--ink); }
+.brand-name { font: 650 18px/1 var(--ui); letter-spacing: -.01em; white-space: nowrap; }
+.nav { display: grid; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 8px; text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: 14.5px; white-space: nowrap; }
+.nav a:hover { background: var(--sunk); color: var(--ink); }
+.nav a[aria-current="page"] { background: var(--sunk); color: var(--ink); font-weight: 600; }
+.nav a[aria-current="page"] .ico { color: var(--accent); }
+.nav .count { margin-left: auto; font-size: 11.5px; font-weight: 600; color: var(--ink-3); background: var(--sunk); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; font-variant-numeric: tabular-nums; }
+.nav-sep { height: 1px; background: var(--line); margin: 8px 6px; }
+.side-foot { margin-top: auto; display: grid; gap: 6px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.engine { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 11px; cursor: pointer; }
+.engine:hover { border-color: var(--ink-3); }
+.engine .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.engine.server .dot { background: var(--accent); }
+.engine-text { display: grid; min-width: 0; line-height: 1.3; }
+.engine-text b { font-weight: 600; font-size: 13px; white-space: nowrap; }
+.engine-text small { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.side-btn { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: var(--ink-2); padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; }
+.side-btn:hover { background: var(--sunk); color: var(--ink); }
+.side-btn span:not(.ico) { display: none; }
+body.side-collapsed .brand-name, body.side-collapsed .nav a > :not(.ico), body.side-collapsed .engine-text { display: none; }
+body.side-collapsed .nav a { justify-content: center; padding: 10px; }
+body.side-collapsed .engine { justify-content: center; padding: 11px; }
+body.side-collapsed .side-row { grid-template-columns: 1fr; }
+body.side-collapsed .brand { justify-content: center; padding-inline: 0; }
+.scrim { position: fixed; inset: 0; background: rgba(8, 10, 14, .5); z-index: 35; }
+
+.main-col { min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 10px; min-height: 52px; background: var(--bg); border-bottom: 1px solid var(--line);
+  padding-inline: max(var(--pad), env(safe-area-inset-left, 0px)) max(var(--pad), env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--bg); }
+.crumbs { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-3); }
+.crumbs b { color: var(--ink); font-weight: 600; }
+.top-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.palette-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 8px 0 12px; border: 1px solid var(--line); background: var(--surface); border-radius: 9px; color: var(--ink-3); cursor: pointer; font-size: 13.5px; }
+.palette-btn:hover { border-color: var(--ink-3); color: var(--ink-2); }
+.menu-btn { display: none; }
+.page { width: 100%; max-width: 1160px; flex: 1; padding-block: var(--pad) 8px; padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+
+/* ------------------------------------------------------------ page header + inputs */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.page-head h1 { margin: 0 0 4px; font: 650 24px/1.2 var(--ui); letter-spacing: -.02em; }
+.page-head p { margin: 0; max-width: 66ch; color: var(--ink-2); font-size: 14.5px; line-height: 1.55; }
+.h-sm { margin: 0 0 10px; font: 600 14.5px/1.3 var(--ui); }
+.section-title { margin: 28px 0 10px; font: 600 15px/1.3 var(--ui); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.field-label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 14px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.stat span { display: block; font-size: 12.5px; color: var(--ink-3); }
+.stat b { display: block; margin-top: 2px; font: 600 22px/1.2 var(--ui); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.composer { display: flex; gap: 8px; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.composer:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ask-input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; font-size: 16px; border: 0; background: transparent; }
+.ask-input:focus-visible { outline: none; }
+.ask-input::placeholder { color: var(--ink-3); }
+.composer .btn { min-height: 44px; padding: 0 20px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; font-size: 13.5px; cursor: pointer; color: var(--ink-2); text-align: left; }
+.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.chip.more { border-style: dashed; background: transparent; font-weight: 550; }
+.recent { margin-top: 20px; }
+.recent-list { display: grid; gap: 6px; }
+.recent-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+.recent-item:hover { border-color: var(--ink-3); }
+.recent-item span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.recent-item small { color: var(--ink-3); white-space: nowrap; }
+.audit-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 14px; align-items: start; }
+.paper-input { width: 100%; resize: vertical; min-height: 150px; padding: 12px 14px; font: 400 17px/1.6 var(--text); background: var(--sunk); border: 1px solid var(--line); border-radius: 10px; }
+.paper-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.examples { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13.5px; }
+.against-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 7px; font-size: 13.5px; }
+.against-list li { display: flex; justify-content: space-between; gap: 10px; color: var(--ink-3); }
+.against-list b { font-weight: 550; color: var(--ink); overflow-wrap: anywhere; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; }
+
+/* ------------------------------------------------------------ result */
+.result-mount { margin-top: 20px; padding-bottom: 32px; scroll-margin-top: 68px; }
+.pipeline { display: flex; align-items: center; gap: 2px; margin: 0 0 16px; padding: 0; list-style: none; overflow-x: auto; scrollbar-width: none; font-size: 13px; color: var(--ink-3); }
+.pipeline::-webkit-scrollbar { display: none; }
+.stage { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 999px; white-space: nowrap; transition: color .2s, background .2s; }
+.stage + .stage::before { content: ""; width: 14px; height: 1px; background: var(--line); margin-right: 8px; align-self: center; }
+.stage b { font-weight: 600; color: var(--ink-2); }
+.stage span { font-variant-numeric: tabular-nums; }
+.stage i { font-style: normal; font-size: 12px; opacity: .75; font-variant-numeric: tabular-nums; }
+.stage[data-on="0"] { opacity: .35; }
+.stage[data-on="1"] { background: var(--sunk); }
+.verdict-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; align-items: end; margin-bottom: 14px; }
+.verdict-title { margin: 0; font: 650 22px/1.25 var(--ui); letter-spacing: -.02em; text-wrap: balance; max-width: 34ch; }
+.verdict-title.good { color: var(--ok); }
+.strip { display: flex; gap: 3px; margin: 12px 0 10px; max-width: 560px; }
+.seg { flex: 1 1 0; max-width: 90px; height: 8px; border-radius: 3px; border: 0; padding: 0; cursor: pointer; background: var(--line); transition: background .3s, transform .15s; }
+.seg:hover { transform: scaleY(1.6); }
+.seg[data-s="supported"] { background: var(--ok); }
+.seg[data-s="unsupported"] { background: var(--warn); }
+.seg[data-s="contradicted"] { background: var(--bad); }
+.seg[aria-current="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font-size: 13.5px; color: var(--ink-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend b { font-variant-numeric: tabular-nums; color: var(--ink); }
+.toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.seg-ctl { display: inline-flex; padding: 2px; background: var(--sunk); border: 1px solid var(--line); border-radius: 9px; }
+.seg-ctl button { border: 0; background: transparent; padding: 5px 12px; border-radius: 7px; cursor: pointer; font-weight: 550; font-size: 13.5px; color: var(--ink-2); }
+.seg-ctl button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(20, 23, 31, .12); }
+.menu { position: relative; }
+.menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 10; min-width: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-pop); padding: 4px; display: grid; }
+.menu-pop button { text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.menu-pop button:hover { background: var(--sunk); }
+
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) 368px; gap: 16px; align-items: start; }
+.doc { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 16px; min-width: 0; }
+.doc-q { margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); color: var(--ink-3); font-size: 13px; }
+.doc-q b { display: block; margin-top: 2px; font: 600 17px/1.35 var(--ui); color: var(--ink); letter-spacing: -.01em; }
+.sentences { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.row-btn { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; padding: 9px 10px 9px 6px; border-radius: 9px; }
+.row-btn:hover { background: var(--sunk); }
+.row-btn[aria-pressed="true"] { background: var(--accent-soft); }
+.mark { width: 22px; height: 22px; margin-top: 3px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line); color: var(--ink-3); transition: background .3s, color .3s, border-color .3s, transform .3s; }
+.mark .ico { width: 13px; height: 13px; }
+.mark[data-s="supported"] { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.mark[data-s="unsupported"] { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.mark[data-s="contradicted"] { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.mark[data-s="pending"] { transform: scale(.8); }
+.line { font: 400 18px/1.6 var(--text); text-wrap: pretty; }
+.line[data-s="unsupported"] { text-decoration: underline wavy var(--warn); text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.line[data-s="contradicted"] { text-decoration: underline wavy var(--bad); text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.line[data-s="removed"] { color: var(--ink-3); text-decoration: line-through; }
+.cite { display: inline-block; margin-left: 6px; padding: 0 5px; border: 1px solid var(--line); border-radius: 5px; font: 500 11.5px/17px var(--mono); color: var(--ink-3); vertical-align: 2px; }
+.removed { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.removed h3 { margin: 0 0 6px; font: 600 13px var(--ui); color: var(--ink-3); }
+.abstain { margin: 0; font: italic 400 18px/1.6 var(--text); color: var(--ink-2); }
+.doc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line-soft); font-size: 12.5px; color: var(--ink-3); }
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.compare h3 { margin: 0 0 6px; font: 600 12.5px var(--ui); color: var(--ink-3); }
+
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 66px); display: grid; gap: 12px; min-width: 0; }
+.rail-head { display: flex; align-items: center; gap: 10px; }
+.rail-head h3 { margin: 0; font: 600 15.5px/1.25 var(--ui); }
+.rail-head p { margin: 1px 0 0; font-size: 12.5px; color: var(--ink-3); }
+.claim-text { margin: 12px 0 0; font: 400 17px/1.55 var(--text); }
+.gap { background: var(--warn-soft); box-shadow: 0 2px 0 var(--warn); border-radius: 2px; }
+.gap-note { margin: 6px 0 0; font-size: 12.5px; color: var(--ink-3); }
+.gauge { margin-top: 14px; }
+.gauge-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--ink-2); }
+.gauge-top b { font: 600 24px/1 var(--ui); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.gauge-bar { position: relative; height: 6px; background: var(--sunk); border-radius: 3px; margin: 10px 0 6px; border: 1px solid var(--line-soft); }
+.gauge-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--v) * 100%); border-radius: 3px; background: var(--ok); transition: width .3s; }
+.gauge-fill[data-s="unsupported"] { background: var(--warn); }
+.gauge-fill[data-s="contradicted"] { background: var(--bad); }
+.gauge-tick { position: absolute; top: -4px; bottom: -4px; left: calc(var(--t) * 100%); width: 2px; background: var(--ink); border-radius: 1px; }
+.gauge-cap { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+.src-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; font-size: 13px; font-weight: 600; }
+.src-head .doc-name { color: var(--ink-3); font-weight: 500; }
+.chip-id { font: 500 11.5px/17px var(--mono); border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; color: var(--ink-2); background: var(--surface); }
+.passage { margin: 0; padding: 12px 14px; background: var(--sunk); border-radius: 9px; font: 400 16px/1.65 var(--text); }
+.passage mark { background: var(--mark); color: var(--mark-ink); padding: 1px 2px; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.passage .h { display: block; margin-bottom: 4px; font: 600 12px var(--ui); color: var(--ink-3); }
+.note { margin: 10px 0 0; padding: 9px 11px; border-radius: 8px; font-size: 13px; background: var(--sunk); color: var(--ink-2); }
+.note.warn { background: var(--warn-soft); color: var(--warn); }
+.strict { display: grid; gap: 6px; }
+.strict label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; }
+.strict output { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.strict small { color: var(--ink-3); font-size: 12.5px; line-height: 1.45; }
+input[type="range"] { width: 100%; accent-color: var(--ink); height: 26px; }
+.vtable { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+.vtable td, .vtable th { padding: 6px 4px; border-top: 1px solid var(--line-soft); text-align: left; font-weight: 400; }
+.vtable td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* tables, pills, sources */
+.table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table.ledger, table.data { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 14px; }
+.ledger th, .ledger td, .data th, .data td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+.ledger thead th, .data thead th { font-weight: 550; color: var(--ink-3); font-size: 12.5px; background: var(--sunk); white-space: nowrap; }
+.data tbody th { font-weight: 600; white-space: nowrap; }
+.ledger tr:last-child td, .data tr:last-child td, .data tr:last-child th { border-bottom: 0; }
+.ledger tbody tr { cursor: pointer; }
+.ledger tbody tr:hover td { background: var(--sunk); }
+.ledger tr[aria-selected="true"] td { background: var(--accent-soft); }
+.num { font-variant-numeric: tabular-nums; text-align: right !important; white-space: nowrap; }
+.filters { display: inline-flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.filters button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 11px; font-size: 12.5px; font-weight: 550; cursor: pointer; color: var(--ink-2); }
+.filters button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 1px 9px 1px 7px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.pill .ico { width: 12px; height: 12px; }
+.pill[data-s="supported"] { background: var(--ok-soft); color: var(--ok); }
+.pill[data-s="unsupported"] { background: var(--warn-soft); color: var(--warn); }
+.pill[data-s="contradicted"] { background: var(--bad-soft); color: var(--bad); }
+.pill[data-s="none"] { background: var(--sunk); color: var(--ink-3); }
+.sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 10px; }
+.source { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.source.hot { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.source-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.source-top .doc-name { font-weight: 600; font-size: 13.5px; overflow-wrap: anywhere; }
+.tag { font-size: 11.5px; font-weight: 600; padding: 0 8px; border-radius: 999px; background: var(--sunk); color: var(--ink-2); }
+.tag.on { background: var(--mark); color: var(--mark-ink); }
+.rankbar { height: 3px; background: var(--sunk); border-radius: 2px; margin: 9px 0; }
+.rankbar i { display: block; height: 100%; width: calc(var(--v) * 100%); background: var(--ink-3); border-radius: 2px; }
+.source p { margin: 0; font: 400 15.5px/1.6 var(--text); color: var(--ink-2); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.source.open p { -webkit-line-clamp: unset; display: block; }
+.source button.more { margin-top: 6px; border: 0; background: none; color: var(--accent); font-weight: 600; padding: 0; cursor: pointer; font-size: 13px; }
+.failure { background: var(--bad-soft); color: var(--bad); border-radius: 12px; padding: 16px 20px; margin: 4px 0 20px; }
+.failure h2 { margin: 0 0 2px; font: 600 16px var(--ui); }
+.failure p { margin: 0; color: var(--ink); font-size: 14px; }
+.empty { text-align: center; padding: 48px 20px; border: 1px dashed var(--line); border-radius: 12px; color: var(--ink-2); background: var(--surface); }
+.empty h3 { margin: 0 0 4px; font: 600 17px var(--ui); color: var(--ink); }
+.empty p { margin: 0 auto 14px; max-width: 46ch; font-size: 14px; }
+.skeleton { display: grid; gap: 10px; }
+.skeleton i { display: block; height: 16px; border-radius: 6px; background: linear-gradient(90deg, var(--sunk), var(--line-soft), var(--sunk)); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ------------------------------------------------------------ library, stress test, history, about */
+.lib { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; align-items: start; padding-bottom: 32px; }
+.doc-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+.doc-item { width: 100%; text-align: left; display: grid; gap: 1px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.doc-item:hover { border-color: var(--ink-3); }
+.doc-item[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.doc-item b { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.doc-item span { font-size: 12.5px; color: var(--ink-3); }
+.field { display: grid; gap: 6px; margin-bottom: 12px; }
+.field label { font-weight: 600; font-size: 13.5px; }
+.field input[type="text"], .field textarea, .field select, .search { border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; background: var(--surface); min-height: 38px; width: 100%; }
+.field textarea { min-height: 120px; font: 400 15.5px/1.55 var(--text); resize: vertical; }
+.search { max-width: 340px; }
+.drop { display: grid; place-items: center; gap: 4px; padding: 14px; border: 1px dashed var(--line); border-radius: 10px; color: var(--ink-2); text-align: center; font-size: 13.5px; cursor: pointer; }
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.chunk-list { display: grid; gap: 8px; }
+.chunk { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.chunk h4 { margin: 0 0 6px; display: flex; gap: 8px; align-items: center; font: 600 13.5px var(--ui); }
+.chunk p { margin: 0; font: 400 16px/1.6 var(--text); }
+.tester { margin-top: 20px; }
+.hit { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line-soft); }
+.hit .sc { font: 600 14px var(--ui); font-variant-numeric: tabular-nums; }
+.hit p { margin: 0; font: 400 15.5px/1.5 var(--text); color: var(--ink-2); overflow-wrap: anywhere; }
+.grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.metric { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.metric b { display: block; font: 600 28px/1 var(--ui); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.metric span { display: block; margin-top: 8px; font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 10px; margin-bottom: 18px; }
+.chart-card svg { display: block; width: 100%; height: auto; }
+.chart-card svg text { font: 500 12px var(--ui); fill: var(--ink-3); }
+.chart-card svg .lab { font-weight: 600; font-size: 12.5px; }
+.bars { display: grid; gap: 12px; padding-bottom: 6px; }
+.bar-row { display: grid; grid-template-columns: 190px minmax(0, 1fr) 120px; gap: 14px; align-items: center; font-size: 14px; }
+.bar-row .track { height: 8px; border-radius: 4px; background: var(--sunk); overflow: hidden; }
+.bar-row .track i { display: block; height: 100%; width: calc(var(--v) * 100%); background: var(--ink); border-radius: 4px; }
+.bar-row .track i[data-lo="1"] { background: var(--bad); }
+.bar-row .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.callout { margin: 0 0 18px; padding: 12px 16px; border-radius: 10px; background: var(--warn-soft); color: var(--ink); max-width: 78ch; font-size: 14px; }
+.callout b { color: var(--warn); }
+.callout p { margin: 2px 0 0; }
+.hist { display: grid; gap: 8px; padding-bottom: 32px; }
+.hist-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.hist-item h3 { margin: 0 0 2px; font: 600 15px/1.35 var(--ui); overflow-wrap: anywhere; }
+.hist-item p { margin: 0; font-size: 13px; color: var(--ink-3); }
+.mini { display: flex; gap: 3px; margin-top: 8px; }
+.mini i { width: 20px; height: 5px; border-radius: 2px; background: var(--line); }
+.mini i[data-s="supported"] { background: var(--ok); }
+.mini i[data-s="unsupported"] { background: var(--warn); }
+.mini i[data-s="contradicted"] { background: var(--bad); }
+.hist-actions { display: flex; gap: 4px; }
+.head-actions { display: flex; gap: 8px; }
+.tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.about { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; padding-bottom: 28px; max-width: 960px; }
+.about > *, .cols > * { min-width: 0; }
+.flow { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; counter-reset: s; }
+.flow li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px 14px; display: grid; gap: 3px; align-content: start; }
+.flow li::before { counter-increment: s; content: counter(s); width: 22px; height: 22px; border-radius: 50%; background: var(--sunk); color: var(--ink-2); border: 1px solid var(--line); display: grid; place-items: center; font: 600 12px var(--ui); margin-bottom: 6px; }
+.flow b { font-weight: 600; font-size: 14.5px; }
+.flow span { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+.about h2 { margin: 0 0 8px; font: 600 15px/1.3 var(--ui); }
+.about ul { margin: 0; padding-left: 18px; color: var(--ink-2); display: grid; gap: 6px; font-size: 14px; }
+.about code, .code { font: 500 12.5px var(--mono); }
+pre.code { padding: 12px 14px; overflow-x: auto; margin: 0; line-height: 1.7; border-radius: 10px; background: var(--sunk); border: 1px solid var(--line); }
+
+/* ------------------------------------------------------------ dialogs, palette, toast */
+.sheet { width: min(620px, calc(100vw - 24px)); max-height: min(86vh, 760px); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-pop); }
+.sheet::backdrop { background: rgba(8, 10, 14, .5); }
+.sheet-form { display: flex; flex-direction: column; max-height: inherit; }
+.sheet-head, .sheet-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; }
+.sheet-head { border-bottom: 1px solid var(--line); }
+.sheet-foot { border-top: 1px solid var(--line); }
+.sheet-head h2 { margin: 0; font: 600 16px var(--ui); }
+.sheet-body { padding: 16px 18px; overflow-y: auto; display: grid; gap: 20px; }
+.group h3 { margin: 0 0 6px; font: 600 14px var(--ui); }
+.group p.hint { margin: 0 0 8px; font-size: 13px; color: var(--ink-3); }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; font-size: 14.5px; }
+.opt input { margin-top: 4px; accent-color: var(--ink); }
+.opt[data-off="1"] { opacity: .5; }
+.opt small { display: block; color: var(--ink-3); font-size: 12.5px; }
+.qgroup { display: grid; gap: 6px; justify-items: start; }
+.qgroup h3 { margin: 0 0 2px; font: 600 14px var(--ui); }
+.palette { width: min(560px, calc(100vw - 24px)); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-pop); margin-top: 12vh; }
+.palette::backdrop { background: rgba(8, 10, 14, .45); }
+.pal-input { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; padding: 16px 18px; font-size: 16px; border-radius: 14px 14px 0 0; }
+.pal-input:focus-visible { outline: none; }
+.pal-list { list-style: none; margin: 0; padding: 6px; max-height: min(50vh, 380px); overflow-y: auto; }
+.pal-item { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 14.5px; }
+.pal-item[aria-selected="true"] { background: var(--accent-soft); }
+.pal-item small { margin-left: auto; color: var(--ink-3); font-size: 12px; }
+.pal-group { padding: 8px 12px 4px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.pal-empty { padding: 18px; color: var(--ink-3); font-size: 14px; }
+.keys { width: 100%; border-collapse: collapse; font-size: 14px; }
+.keys td { padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
+.keys td:first-child { white-space: nowrap; padding-right: 20px; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(22px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--on-ink); padding: 9px 12px 9px 16px; border-radius: 10px; font-weight: 500; font-size: 14px; z-index: 90; box-shadow: var(--shadow-pop); display: flex; align-items: center; gap: 14px; }
+.toast button { border: 0; background: transparent; color: inherit; font-weight: 650; text-decoration: underline; cursor: pointer; padding: 2px 4px; }
+.foot { margin-top: 24px; padding-block: 16px 28px; color: var(--ink-3); font-size: 12.5px; border-top: 1px solid var(--line); }
+.foot p { margin: 0; max-width: 80ch; }
+
+/* ------------------------------------------------------------ responsive */
+@media (max-width: 1100px) { .flow { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); } }
+@media (max-width: 980px) {
+  .app, body.side-collapsed .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; inset: 0 auto 0 0; width: min(290px, 86vw); transform: translateX(-102%); transition: transform .2s ease; box-shadow: var(--shadow-pop); }
+  body.nav-open .side { transform: none; }
+  body.side-collapsed .brand-name, body.side-collapsed .nav a > :not(.ico), body.side-collapsed .engine-text { display: revert; }
+  body.side-collapsed .nav a { justify-content: flex-start; padding: 9px 10px; }
+  .menu-btn { display: inline-grid; margin-left: -6px; }
+  .collapse-btn { display: none !important; }
+  .topbar { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+  .page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .palette-btn span:not(.ico) { display: none; }
+  .workspace, .lib, .audit-grid, .verdict-head, .compare { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; }
+  .toolbar { justify-content: flex-start; }
+}
+@media (max-width: 640px) {
+  .page { padding-block: 18px 8px; }
+  .composer { flex-direction: column; }
+  .composer .btn { width: 100%; }
+  .doc { padding: 14px 10px 14px; }
+  .line { font-size: 17px; }
+  .bar-row { grid-template-columns: 1fr 100px; }
+  .bar-row .track { grid-column: 1 / -1; order: 3; }
+  .hist-item, .recent-item { grid-template-columns: minmax(0, 1fr); }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .filters { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+</style>
+
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="app">
+    <aside class="side" id="side" aria-label="Main">
+      <a class="brand" href="#ask" aria-label="TruthLens home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="2.6"/>
+          <path d="M21.5 21.5L28 28" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M9.6 14.2l3.2 3.2 5.6-6.2" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-name">TruthLens</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Sections"></nav>
+      <div class="side-foot">
+        <button class="engine" id="engine-chip" type="button" aria-haspopup="dialog">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="engine-text"><b id="engine-label">Browser engine</b><small id="engine-sub">Runs on this page</small></span>
+        </button>
+        <div class="side-row">
+          <button class="side-btn" id="theme-btn" type="button"></button>
+          <button class="side-btn" id="settings-btn" type="button" aria-haspopup="dialog"></button>
+          <button class="side-btn collapse-btn" id="collapse-btn" type="button" aria-label="Collapse sidebar"></button>
+        </div>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <div class="main-col">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"></button>
+        <div class="crumbs"><span class="crumb-root">TruthLens</span><span class="crumb-sep" aria-hidden="true">/</span><b id="crumb">Ask</b></div>
+        <div class="top-actions">
+          <button class="palette-btn" id="palette-btn" type="button" aria-haspopup="dialog"><span class="ico-slot"></span><span>Search or jump to</span><kbd>Ctrl K</kbd></button>
+          <button class="icon-btn" id="help-btn" type="button" aria-label="Keyboard shortcuts"></button>
+        </div>
+      </header>
+
+      <main id="main" class="page">
+        <!-- ASK -->
+        <section class="view" id="view-ask" data-view="ask" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Ask a question</h1>
+              <p>TruthLens writes a cited answer from your documents, splits it into claims, and checks each one against the sources.</p>
+            </div>
+          </div>
+          <div class="stats" id="stats" aria-label="Workspace summary"></div>
+          <form class="composer" id="ask-form" autocomplete="off">
+            <label class="sr" for="question">Your question</label>
+            <input class="ask-input" id="question" name="question" type="text" maxlength="500" placeholder="Ask about the Helio Home Battery" required>
+            <button class="btn primary" id="ask-btn" type="submit">Check answer</button>
+          </form>
+          <div class="chips" id="chips" role="group" aria-label="Sample questions"></div>
+          <div id="ask-result" class="result-mount"></div>
+          <div class="recent" id="recent" hidden></div>
+        </section>
+
+        <!-- AUDIT -->
+        <section class="view" id="view-audit" data-view="audit" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Check text</h1>
+              <p>Paste an answer from any chatbot, report or email and check it against your documents. In the browser engine nothing leaves this page.</p>
+            </div>
+          </div>
+          <div class="audit-grid">
+            <form class="audit-form card" id="audit-form">
+              <label class="field-label" for="audit-text">Answer to check</label>
+              <textarea id="audit-text" class="paper-input" rows="6" maxlength="6000" placeholder="Paste the answer here. Citations like [c3] are optional." required></textarea>
+              <div class="row">
+                <button class="btn primary" type="submit" id="audit-btn">Check text</button>
+                <div class="examples" id="audit-examples" role="group" aria-label="Example answers"></div>
+              </div>
+            </form>
+            <aside class="against card" aria-label="Documents used">
+              <h2 class="h-sm">Checked against</h2>
+              <ul id="against-list" class="against-list"></ul>
+              <a class="link" href="#library">Manage documents</a>
+            </aside>
+          </div>
+          <div id="audit-result" class="result-mount"></div>
+        </section>
+
+        <!-- LIBRARY -->
+        <section class="view" id="view-library" data-view="library" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Documents</h1>
+              <p>Answers and checks use only these files. Add your own, or restore the fictional Helio samples.</p>
+            </div>
+          </div>
+          <div class="lib" id="lib"></div>
+        </section>
+
+        <!-- BENCHMARK -->
+        <section class="view" id="view-benchmark" data-view="benchmark" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Stress test</h1>
+              <p>For each of the 30 sample questions the demo writes a true answer, then we plant false variants: an invented fact, a changed number, a swapped model, a flipped negation. The checker never sees which is which.</p>
+            </div>
+            <div class="head-actions"><button class="btn primary" id="bench-run" type="button">Run stress test</button></div>
+          </div>
+          <div id="bench-out"></div>
+        </section>
+
+        <!-- HISTORY -->
+        <section class="view" id="view-history" data-view="history" hidden>
+          <div class="page-head">
+            <div>
+              <h1>History</h1>
+              <p>Your last checks, saved in this browser only.</p>
+            </div>
+          </div>
+          <div class="tools" id="history-tools"></div>
+          <div id="history-out"></div>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="view" id="view-about" data-view="about" hidden>
+          <div class="page-head">
+            <div>
+              <h1>How it works</h1>
+              <p>A retrieval-augmented answer pipeline with a hallucination detector on the end. Every claim in an answer is checked before anyone relies on it.</p>
+            </div>
+          </div>
+          <div id="about-out" class="about"></div>
+        </section>
+
+        <footer class="foot">
+          <p>Sample documents describe a fictional product. In the browser engine the answer writer is a demo that plants false sentences on purpose, and the checker is the lexical baseline from the Python pipeline.</p>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <dialog class="sheet" id="settings" aria-labelledby="settings-title">
+    <form method="dialog" class="sheet-form" id="settings-form">
+      <div class="sheet-head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="btn quiet small" value="close" aria-label="Close settings">Close</button>
+      </div>
+      <div class="sheet-body" id="settings-body"></div>
+      <div class="sheet-foot">
+        <button class="btn quiet" type="button" id="settings-reset">Reset to defaults</button>
+        <button class="btn primary" value="done">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="qdialog" aria-labelledby="qd-title">
+    <form method="dialog" class="sheet-form">
+      <div class="sheet-head"><h2 id="qd-title">Sample questions</h2><button class="btn quiet small" value="close">Close</button></div>
+      <div class="sheet-body" id="qd-body"></div>
+    </form>
+  </dialog>
+
+  <dialog class="palette" id="palette" aria-label="Command palette">
+    <input class="pal-input" id="pal-input" type="text" placeholder="Search pages, sample questions and actions" autocomplete="off" aria-controls="pal-list">
+    <ul class="pal-list" id="pal-list" role="listbox"></ul>
+  </dialog>
+
+  <dialog class="sheet" id="helpdialog" aria-labelledby="help-title">
+    <form method="dialog" class="sheet-form">
+      <div class="sheet-head"><h2 id="help-title">Keyboard shortcuts</h2><button class="btn quiet small" value="close">Close</button></div>
+      <div class="sheet-body" id="help-body"></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+window.TL_DATA = {
+ "docs": [
+  {
+   "name": "installation.md",
+   "text": "# Installation requirements\n\nInstallation must be carried out by a Helio-certified installer. The unit must be mounted on a masonry or concrete wall, or on a timber stud wall fitted with a backing board.\n\nThe bottom of the unit must be at least 300 mm above the floor. Leave 500 mm of clearance at each side and 200 mm of clearance above the unit for ventilation.\n\nThe battery must not be installed in bedrooms, bathrooms or other habitable rooms. A garage, utility room or covered outdoor wall are suitable locations.\n\n# Electrical and timing\n\nThe unit needs a dedicated 32 A circuit breaker. A typical installation of an H10 takes one day with two installers.\n\nThe installer submits the grid connection application to the local utility. Approval typically takes 2 to 6 weeks.\n\n# Commissioning\n\nThe installer commissions the battery through the Helio app by scanning the QR code on the unit. Commissioning records the date on which the warranty starts."
+  },
+  {
+   "name": "overview.md",
+   "text": "# Helio Home Battery overview\n\nThe Helio Home Battery is a wall-mounted energy storage unit for homes. It uses lithium iron phosphate (LFP) cells. It is sold in two models: the Helio H10 with 10 kWh of usable capacity and the Helio H15 with 15 kWh of usable capacity.\n\nBoth models work with rooftop solar systems and can also charge from the grid during off-peak hours. Up to 4 units can be connected together on one site to increase capacity.\n\n# App and updates\n\nThe battery is controlled through the Helio app, which is available for iOS and Android. The app shows charge level, solar production and household consumption in real time. Firmware updates are delivered over Wi-Fi and are installed automatically at night unless the owner turns automatic updates off.\n\n# Company\n\nHelio assembles its batteries at a single factory in Pune, India. Helio sells the battery in India only at present."
+  },
+  {
+   "name": "pricing_support.md",
+   "text": "# Pricing\n\nThe Helio H10 costs 6,40,000 rupees and the Helio H15 costs 8,90,000 rupees, before installation. Installation typically costs between 45,000 and 70,000 rupees.\n\nPartner banks offer 0 percent EMI over 12 months on both models.\n\n# Support\n\nPhone support is available from 8 am to 8 pm IST, Monday to Saturday. Email replies arrive within 2 business days. Support staff can view remote diagnostics only with the owner's consent given through the app.\n\n# Returns\n\nHelio accepts returns within 30 days of purchase for units that are unopened and not installed. A restocking fee of 10 percent applies to returns.\n\n# Time-of-use scheduling\n\nThe app can schedule charging for off-peak hours. Export of electricity to the grid is possible only where the local utility allows it, and the app has a setting to limit the export."
+  },
+  {
+   "name": "safety.md",
+   "text": "# Safety systems\n\nA battery management system monitors the voltage and temperature of every cell. The unit shuts down automatically if any cell temperature rises above 60 °C.\n\nThe cells sit inside a fire-rated steel enclosure. The battery design has passed third-party abuse testing for overcharge, short circuit and crush.\n\n# Warnings\n\nThe battery must not be used as the only power source for medical life-support equipment. Install a smoke detector within 3 m of the unit.\n\nIf the unit shows signs of fire or swelling, leave the area, keep a distance of at least 10 m and call the emergency services. Do not open the enclosure.\n\n# Backup mode\n\nDuring a power cut, backup mode supplies an essential-loads circuit only, not the whole home. The H10 can supply at most 5 kW in backup mode and the H15 at most 7.5 kW."
+  },
+  {
+   "name": "specs.md",
+   "text": "# Technical specifications\n\nThe Helio H10 has 10 kWh of usable capacity, a continuous power output of 5 kW and a peak output of 7 kW for 10 seconds. It weighs 98 kg and measures 1,050 mm by 600 mm by 190 mm.\n\nThe Helio H15 has 15 kWh of usable capacity, a continuous power output of 7.5 kW and a peak output of 10 kW for 10 seconds. It weighs 138 kg and measures 1,350 mm by 600 mm by 190 mm.\n\n# Common specifications\n\nBoth models have a round-trip efficiency of 95 percent. The rated cycle life is 6,000 cycles to 70 percent of original capacity. The battery can discharge at temperatures from -10 °C to 50 °C and can charge at temperatures from 0 °C to 45 °C.\n\nThe enclosure is rated IP55, which allows outdoor installation in a location covered from direct rain. Noise is below 30 dB at one metre. Backup switchover takes less than 20 milliseconds.\n\n# Connectivity\n\nThe battery connects through Wi-Fi at 2.4 GHz or through Ethernet. It has no cellular modem."
+  },
+  {
+   "name": "warranty.md",
+   "text": "# Standard warranty\n\nThe standard warranty lasts 10 years. It guarantees that the battery keeps at least 70 percent of its original capacity at the end of the warranty period or after 6,000 cycles, whichever comes first.\n\nThe warranty starts on the commissioning date recorded by an authorised installer, not on the purchase date. If more than 6 months pass between purchase and commissioning, the warranty starts 6 months after purchase.\n\n# Extended warranty\n\nAn extended warranty that lengthens coverage to 15 years is available. It costs 4 percent of the purchase price and must be bought within 12 months of commissioning. No warranty longer than 15 years is offered.\n\n# Exclusions and transfer\n\nThe warranty does not cover damage caused by installation by a person who is not an authorised installer, flooding, ambient temperatures above 50 °C, or any modification of the unit.\n\nThe warranty can be transferred once to a new homeowner if the transfer is registered within 60 days of the change of ownership.\n\n# Claims\n\nReplacement units ship within 10 business days of claim approval. On-site labour for a replacement is covered for the first 3 years only."
+  }
+ ],
+ "questions": [
+  {
+   "id": "q001",
+   "kind": "answerable",
+   "question": "How much usable capacity does the Helio H15 have?"
+  },
+  {
+   "id": "q002",
+   "kind": "answerable",
+   "question": "How long is the standard warranty and when does it start?"
+  },
+  {
+   "id": "q003",
+   "kind": "answerable",
+   "question": "Can I install the battery in my bedroom?"
+  },
+  {
+   "id": "q004",
+   "kind": "answerable",
+   "question": "How long does a typical H10 installation take?"
+  },
+  {
+   "id": "q005",
+   "kind": "answerable",
+   "question": "What do the H10 and the installation cost?"
+  },
+  {
+   "id": "q006",
+   "kind": "answerable",
+   "question": "What happens if a cell in the battery gets too hot?"
+  },
+  {
+   "id": "q007",
+   "kind": "answerable",
+   "question": "Can the battery be installed outdoors?"
+  },
+  {
+   "id": "q008",
+   "kind": "answerable",
+   "question": "How quickly does the battery switch over during a power cut?"
+  },
+  {
+   "id": "q009",
+   "kind": "answerable",
+   "question": "Can I transfer the warranty if I sell my house?"
+  },
+  {
+   "id": "q010",
+   "kind": "answerable",
+   "question": "What is the return policy?"
+  },
+  {
+   "id": "q011",
+   "kind": "partial",
+   "question": "Does the Helio battery work with every solar inverter brand?"
+  },
+  {
+   "id": "q012",
+   "kind": "answerable",
+   "question": "Does the Helio battery have cellular connectivity?"
+  },
+  {
+   "id": "q013",
+   "kind": "false_premise",
+   "question": "Can I get a 20-year warranty on the Helio battery?"
+  },
+  {
+   "id": "q014",
+   "kind": "answerable",
+   "question": "What are the weight and dimensions of the H10?"
+  },
+  {
+   "id": "q015",
+   "kind": "answerable",
+   "question": "How noisy is the battery?"
+  },
+  {
+   "id": "q016",
+   "kind": "answerable",
+   "question": "What are the phone support hours?"
+  },
+  {
+   "id": "q017",
+   "kind": "unanswerable",
+   "question": "Which countries does Helio ship the battery to?"
+  },
+  {
+   "id": "q018",
+   "kind": "unanswerable",
+   "question": "Does the Helio app work with Alexa or Google Home?"
+  },
+  {
+   "id": "q019",
+   "kind": "partial",
+   "question": "How many years will the battery last?"
+  },
+  {
+   "id": "q020",
+   "kind": "answerable",
+   "question": "How much does the extended warranty cost and when must I buy it?"
+  },
+  {
+   "id": "q021",
+   "kind": "answerable",
+   "question": "Is the battery safe to use with medical equipment?"
+  },
+  {
+   "id": "q022",
+   "kind": "answerable",
+   "question": "How long does grid connection approval take?"
+  },
+  {
+   "id": "q023",
+   "kind": "partial",
+   "question": "What chemistry does the battery use and why is it better than other chemistries?"
+  },
+  {
+   "id": "q024",
+   "kind": "unanswerable",
+   "question": "How does the Helio battery compare with the Tesla Powerwall?"
+  },
+  {
+   "id": "q025",
+   "kind": "unanswerable",
+   "question": "Who founded Helio and when?"
+  },
+  {
+   "id": "q026",
+   "kind": "answerable",
+   "question": "What clearances are needed around the unit when installing it?"
+  },
+  {
+   "id": "q027",
+   "kind": "partial",
+   "question": "Can the battery charge in freezing weather?"
+  },
+  {
+   "id": "q028",
+   "kind": "partial",
+   "question": "What is the round-trip efficiency and how much money will it save me per year?"
+  },
+  {
+   "id": "q029",
+   "kind": "answerable",
+   "question": "How many units can I connect together?"
+  },
+  {
+   "id": "q030",
+   "kind": "answerable",
+   "question": "What is not covered by the warranty?"
+  }
+ ]
+};
+
+</script>
+<script>
+/* TruthLens engine, in the browser. A port of the Python pipeline's offline path:
+   corpus chunking, BM25 retrieval, sentence + claim splitting, the lexical verifier, and a demo generator.
+   Records have the same shape as the Python server's, so the UI renders either one. */
+(function (root) {
+  "use strict";
+
+  // ------------------------------------------------------------------ text utils
+  const STOP = new Set(("a an the of to in on at for from by with and or but if then than that this these those is are " +
+    "was were be been being it its as into onto over under about can could will would should may might " +
+    "must do does did has have had not no also both each any all such per via up out which who whom whose " +
+    "what when where how there their they them he she we you your our i me my his her").split(/\s+/));
+  const TOKEN_RE = /[a-z]+\d+|\d+(?:[.,]\d+)*|[a-z]+/g;
+
+  function stem(t) {
+    if (/\d/.test(t)) return t;
+    if (t.length > 4 && t.endsWith("ies")) t = t.slice(0, -3) + "y";
+    else if (t.length > 3 && t.endsWith("s") && !t.endsWith("ss") && !t.endsWith("us")) t = t.slice(0, -1);
+    for (const suf of ["ing", "ed"]) {
+      if (t.length > 5 && t.endsWith(suf)) { t = t.slice(0, -suf.length); break; }
+    }
+    if (t.length > 4 && t.endsWith("e")) t = t.slice(0, -1);
+    return t;
+  }
+  function tokenize(text) {
+    const out = [];
+    for (const m of text.toLowerCase().match(TOKEN_RE) || []) {
+      if (/^\d/.test(m)) { out.push(m.replace(/,/g, "")); continue; }
+      if (STOP.has(m)) continue;
+      out.push(stem(m));
+    }
+    return out;
+  }
+  const isNumber = (t) => /^\d/.test(t);
+  const words = (s) => s.split(/\s+/).filter(Boolean).length;
+
+  // ------------------------------------------------------------------ sentences
+  const CITE_RE = /\[\s*(c\d+(?:\s*[,;]\s*c\d+)*)\s*\]/gi;
+  const TRAIL_CITE_RE = /([.!?])\s*((?:\[\s*c\d+(?:\s*[,;]\s*c\d+)*\s*\]\s*)+)/gi;
+  const ABBR_RE = /\b(?:e\.g|i\.e)\.|\b(?:vs|approx|etc|dr|mr|mrs|ms|st|inc|ltd|fig)\./gi;
+  const SPLIT_RE = /(?<=[.!?])\s+(?=["'“(]?[A-Z0-9])/;
+  const BULLET_RE = /^\s*(?:[-*•]|\d+[.)])\s+/;
+  const REFUSAL_RE = new RegExp(
+    "(?:\\b(?:sources?|documents?|context|provided\\s+(?:text|information))\\s+" +
+    "(?:do(?:es)?\\s+not|don't|doesn't|did\\s+not)\\s+" +
+    "(?:say|state|contain|mention|specify|provide|cover|include|address|have)" +
+    "|\\b(?:i|we)\\s+(?:could\\s+not|couldn't|cannot|can't|am\\s+unable\\s+to)\\s+find" +
+    "|\\bnot\\s+enough\\s+information\\b" +
+    "|\\bno\\s+information\\s+(?:is\\s+)?(?:available|provided|given)\\b)", "i");
+
+  function splitSentences(text) {
+    const out = [];
+    for (let line of text.replace(/\r/g, "").split("\n")) {
+      line = line.trim().replace(BULLET_RE, "");
+      if (!line) continue;
+      line = line.replace(TRAIL_CITE_RE, (_, p, cites) => " " + cites.trim() + p + " ");
+      line = line.replace(/\s{2,}/g, " ").trim();
+      const masked = line.replace(ABBR_RE, (m) => m.replace(/\./g, "․"));
+      for (let part of masked.split(SPLIT_RE)) {
+        part = part.replace(/․/g, ".").trim();
+        if (part) out.push(part);
+      }
+    }
+    return out;
+  }
+
+  function parseSentence(idx, raw) {
+    const ids = [];
+    for (const m of raw.matchAll(CITE_RE)) {
+      for (let x of m[1].split(/[,;]/)) {
+        x = x.trim().toLowerCase();
+        if (x && !ids.includes(x)) ids.push(x);
+      }
+    }
+    let clean = raw.replace(CITE_RE, "").replace(/\s+([.!?,;:])/g, "$1").replace(/\s{2,}/g, " ").trim();
+    return { idx, raw, text: clean, cited_ids: ids, is_refusal: REFUSAL_RE.test(clean) };
+  }
+  const parseAnswer = (raw) =>
+    splitSentences(raw.replace(/\*\*/g, "").replace(/__/g, "")).map((s, i) => parseSentence(i, s));
+  const renderAnswer = (sents) => sents.map((s) => s.raw).join(" ");
+
+  // ------------------------------------------------------------------ atomic claims
+  const CLAUSE_SPLIT = /;\s+|,\s+(?:and|but|while|whereas|although)\s+/i;
+  const VERB_START = new Set(("is are was were has have had can could will would may might must does do did also supports " +
+    "includes requires uses offers provides comes covers takes works allows needs weighs ships lasts begins starts " +
+    "operates stores delivers measures charges discharges connects").split(" "));
+  const INDEP_START = new Set("it they the this these its their a an both each all there we he she".split(" "));
+  const strip = (w) => w.toLowerCase().replace(/^[,.;:]+|[,.;:]+$/g, "");
+  function tidy(p) {
+    p = p.trim().replace(/[ .;,]+$/, "");
+    return p ? p[0].toUpperCase() + p.slice(1) + "." : p;
+  }
+  function atomicClaims(text) {
+    text = text.trim();
+    const parts = text.split(CLAUSE_SPLIT).map((p) => p && p.trim()).filter(Boolean);
+    if (parts.length < 2 || parts.some((p) => words(p) < 3)) return [text];
+    const first = parts[0].split(/\s+/);
+    let subject = null;
+    for (let i = 0; i < first.length; i++) {
+      if (VERB_START.has(strip(first[i]))) { subject = first.slice(0, i).join(" ") || null; break; }
+    }
+    const out = [tidy(parts[0])];
+    for (const p of parts.slice(1)) {
+      const toks = p.split(/\s+/);
+      const w0 = strip(toks[0]);
+      let next;
+      if ((w0 === "it" || w0 === "they") && subject) next = subject + " " + toks.slice(1).join(" ");
+      else if (VERB_START.has(w0)) { if (!subject) return [text]; next = subject + " " + p; }
+      else if (INDEP_START.has(w0) || /^[A-Z]/.test(toks[0])) next = p;
+      else return [text];
+      out.push(tidy(next));
+    }
+    return out;
+  }
+  function extractClaims(sentences, prefix = "") {
+    const claims = [];
+    for (const s of sentences) {
+      if (s.is_refusal || s.text.endsWith("?") || words(s.text) < 3) continue;
+      atomicClaims(s.text).forEach((t, j) =>
+        claims.push({ id: `${prefix}s${s.idx}.${j}`, text: t, sentence_idx: s.idx, cited_ids: [...s.cited_ids] }));
+    }
+    return claims;
+  }
+
+  // ------------------------------------------------------------------ corpus
+  function pieces(para, maxWords) {
+    if (words(para) <= maxWords) return [para];
+    const out = []; let cur = [];
+    for (const s of splitSentences(para)) {
+      if (cur.length && words([...cur, s].join(" ")) > maxWords) { out.push(cur.join(" ")); cur = []; }
+      cur.push(s);
+    }
+    if (cur.length) out.push(cur.join(" "));
+    return out;
+  }
+  function chunkDocument(doc, text, maxWords = 110) {
+    const paras = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+    const blocks = []; let heading = "";
+    for (const p of paras) {
+      if (p.startsWith("#") && !p.includes("\n")) { heading = p.replace(/^#+\s*/, "").trim(); continue; }
+      for (const piece of pieces(p, maxWords)) blocks.push([heading, piece]);
+    }
+    const chunks = []; let curH = null; let cur = [];
+    for (const [h, piece] of blocks) {
+      if (cur.length && (h !== curH || words([...cur, piece].join(" ")) > maxWords)) { chunks.push([curH, cur]); cur = []; }
+      curH = h; cur.push(piece);
+    }
+    if (cur.length) chunks.push([curH, cur]);
+    return chunks.map(([h, parts]) => ({ doc, heading: h || "", text: h ? `${h}\n${parts.join(" ")}` : parts.join(" ") }));
+  }
+  /** docs: [{name, text}] -> chunks with stable ids c0, c1, ... (documents sorted by name, like the Python loader). */
+  function loadCorpus(docs) {
+    const chunks = [];
+    [...docs].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)).forEach((d) => {
+      for (const c of chunkDocument(d.name, d.text)) chunks.push({ id: `c${chunks.length}`, ...c });
+    });
+    return chunks;
+  }
+
+  // ------------------------------------------------------------------ retrieval (BM25)
+  class BM25 {
+    constructor(chunks, k1 = 1.5, b = 0.75) {
+      this.k1 = k1; this.b = b;
+      this.docs = chunks.map((c) => { const m = new Map(); tokenize(c.text).forEach((t) => m.set(t, (m.get(t) || 0) + 1)); return m; });
+      this.lens = this.docs.map((d) => { let n = 0; d.forEach((v) => (n += v)); return n; });
+      this.avg = this.lens.length ? this.lens.reduce((a, b2) => a + b2, 0) / this.lens.length : 0;
+      const df = new Map();
+      this.docs.forEach((d) => d.forEach((_, t) => df.set(t, (df.get(t) || 0) + 1)));
+      const n = this.docs.length;
+      this.n = n;
+      this.idf = new Map();
+      df.forEach((f, t) => this.idf.set(t, Math.log(1 + (n - f + 0.5) / (f + 0.5))));
+      this.maxIdf = Math.log(1 + (n + 0.5) / 0.5);
+    }
+    scores(query) {
+      const q = tokenize(query);
+      return this.docs.map((d, i) => {
+        let s = 0;
+        for (const t of q) {
+          const f = d.get(t);
+          if (f) s += this.idf.get(t) * f * (this.k1 + 1) / (f + this.k1 * (1 - this.b + this.b * this.lens[i] / (this.avg || 1)));
+        }
+        return s;
+      });
+    }
+  }
+  class Retriever {
+    constructor(chunks) { this.chunks = chunks; this.bm25 = new BM25(chunks); }
+    /** Top-k chunks with their BM25 score and rank. */
+    retrieve(query, k = 5) {
+      const sc = this.bm25.scores(query);
+      const order = sc.map((_, i) => i).sort((a, b) => sc[b] - sc[a] || a - b);
+      return order.slice(0, k).map((i, r) => ({ ...this.chunks[i], score: Math.round(sc[i] * 1000) / 1000, rank: r + 1 }));
+    }
+  }
+
+  // ------------------------------------------------------------------ lexical verifier
+  const NEG_RE = /\b(?:not|no|never|cannot|without|neither|nor|none|unable)\b|n't/i;
+  const bodyOf = (text) => (text.includes("\n") ? text.split("\n").slice(1).join(" ") : text);
+
+  function windowsOf(chunk) {
+    if (chunk._wins) return chunk._wins;
+    const sents = splitSentences(chunk.text);
+    const list = sents.length ? sents : [chunk.text];
+    const wins = [];
+    for (let n = 1; n <= 3; n++) {
+      for (let i = 0; i + n <= list.length; i++) {
+        const text = list.slice(i, i + n).join(" ");
+        wins.push({ text, set: new Set(tokenize(text)), neg: NEG_RE.test(text) });
+      }
+    }
+    Object.defineProperty(chunk, "_wins", { value: wins, enumerable: false });
+    return wins;
+  }
+
+  function verifyClaim(claim, chunks, threshold) {
+    const ctoks = tokenize(claim.text);
+    if (!ctoks.length) return { claim_id: claim.id, verifier: "lexical", label: "supported", support_score: 1, evidence_id: null, cited_ok: null, rationale: "nothing checkable", window: "" };
+    const cset = [...new Set(ctoks)];
+    const cnums = cset.filter(isNumber);
+    const claimNeg = NEG_RE.test(claim.text);
+    let ok = { s: -1, ch: null, w: "" };
+    let con = { s: -1, ch: null, w: "" };
+    const cited = chunks.filter((c) => claim.cited_ids.includes(c.id));
+    const rest = chunks.filter((c) => !claim.cited_ids.includes(c.id));
+    for (const ch of [...cited, ...rest]) {
+      for (const w of windowsOf(ch)) {
+        let hit = 0;
+        for (const t of cset) if (w.set.has(t)) hit++;
+        const cov = hit / cset.length;
+        const score = cnums.every((n) => w.set.has(n)) ? cov : cov * 0.5;
+        if (score >= threshold && claimNeg !== w.neg) { if (score > con.s) con = { s: score, ch, w: w.text }; }
+        else if (score > ok.s) ok = { s: score, ch, w: w.text };
+      }
+    }
+    let label, score, ch, win;
+    if (ok.s >= threshold) { label = "supported"; score = ok.s; ch = ok.ch; win = ok.w; }
+    else if (con.ch) { label = "contradicted"; score = Math.min(Math.max(ok.s, 0), 0.3); ch = con.ch; win = con.w; }
+    else { label = "unsupported"; score = ok.s; ch = ok.ch; win = ok.w; }
+    return {
+      claim_id: claim.id, verifier: "lexical", label, support_score: Math.round(Math.max(score, 0) * 10000) / 10000,
+      evidence_id: ch ? ch.id : null, cited_ok: ch && claim.cited_ids.length ? claim.cited_ids.includes(ch.id) : null,
+      rationale: "best window: " + win.slice(0, 160), window: win,
+    };
+  }
+  const verifyAll = (claims, chunks, threshold = 0.7) => claims.map((c) => verifyClaim(c, chunks, threshold));
+
+  // ------------------------------------------------------------------ demo generator
+  const INJECTED_BANK = [
+    "The unit also supports 5G cellular connectivity for remote monitoring.",
+    "It is certified for use in marine and offshore environments.",
+    "Helio ships to more than 40 countries worldwide.",
+    "The battery can be upgraded to double its capacity with a firmware licence.",
+    "A free 20-year warranty applies to every unit sold.",
+    "Helio batteries can be installed in bedrooms and bathrooms.",
+  ];
+  function fnv(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h >>> 0;
+  }
+  /** Change the first number in a sentence so it stays fluent but is no longer true. */
+  function tamper(sentence) {
+    let done = false;
+    const out = sentence.replace(/\d[\d,]*(?:\.\d+)?/, (m) => {
+      done = true;
+      const n = parseFloat(m.replace(/,/g, ""));
+      const next = n >= 10 ? Math.round(n * 1.5) : n + 5;
+      return m.includes(",") ? next.toLocaleString("en-US") : String(next);
+    });
+    return done ? out : null;
+  }
+
+  /** Extractive "model": picks the sentences that best match the question and cites their chunks.
+      On about half the questions it also plants one false sentence, so there is something to catch. */
+  function demoGenerate(question, chunks, index, opts = {}) {
+    const q = [...new Set(tokenize(question))];
+    const weight = (t) => index.idf.get(t) ?? index.maxIdf;
+    const total = q.reduce((a, t) => a + weight(t), 0) || 1;
+    const cands = [];
+    chunks.forEach((ch, r) => {
+      splitSentences(bodyOf(ch.text)).forEach((s, pos) => {
+        if (!/[.!?]$/.test(s)) return;
+        const st = tokenize(s);
+        const near = (t) => st.some((x) => x === t || (t.length >= 4 && x.length >= 4 && x.slice(0, 4) === t.slice(0, 4) && !/\d/.test(t)));
+        const hit = q.reduce((a, t) => a + (near(t) ? weight(t) : 0), 0) / total;
+        cands.push({ s, ch, r, pos, score: hit + 0.04 * (chunks.length - r) / chunks.length });
+      });
+    });
+    cands.sort((a, b) => b.score - a.score);
+    const best = cands[0];
+    const sentences = []; // {text, cite, injected}
+    if (best && best.score >= 0.3) {
+      const picked = cands.filter((c) => c.score >= Math.max(0.3, best.score * 0.6)).slice(0, 3)
+        .sort((a, b) => a.r - b.r || a.pos - b.pos);
+      for (const c of picked) sentences.push({ text: c.s, cite: c.ch.id, injected: false });
+    }
+    if (!sentences.length) {
+      return { raw: "The sources do not say.", injected: [], note: "abstained" };
+    }
+    const h = fnv(question.trim().toLowerCase());
+    if (opts.inject !== false && h % 2 === 0) {
+      const mode = (h >>> 1) % 2;
+      const victim = sentences[sentences.length - 1];
+      const t = mode === 1 ? tamper(victim.text) : null;
+      if (t) sentences.push({ text: t, cite: victim.cite, injected: true, replaces: sentences.length - 1 });
+      else sentences.push({ text: INJECTED_BANK[(h >>> 2) % INJECTED_BANK.length], cite: sentences[0].cite, injected: true });
+    }
+    // a tampered sentence replaces its original instead of repeating it
+    const final = [];
+    sentences.forEach((s, i) => { if (!sentences.some((o) => o.replaces === i)) final.push(s); });
+    const cited = (s) => s.text.replace(/([.!?])$/, ` [${s.cite}]$1`);
+    return { raw: final.map(cited).join(" "), injected: final.map((s) => s.injected) };
+  }
+
+  // ------------------------------------------------------------------ pipeline
+  const snap = (sentences, claims, verdicts) => ({ answer: renderAnswer(sentences), sentences, claims, verdicts: { lexical: verdicts } });
+
+  /** Ask a question: retrieve, generate (demo), split, verify. */
+  function ask(question, retriever, opts = {}) {
+    const t0 = performance.now();
+    const k = opts.k || 5, threshold = opts.threshold ?? 0.7;
+    const chunks = retriever.retrieve(question, k);
+    const t1 = performance.now();
+    const gen = demoGenerate(question, chunks, retriever.bm25, opts);
+    const t2 = performance.now();
+    const sentences = parseAnswer(gen.raw);
+    sentences.forEach((s, i) => { s.injected = !!(gen.injected && gen.injected[i]); });
+    const claims = extractClaims(sentences);
+    const t3 = performance.now();
+    const verdicts = verifyAll(claims, chunks, threshold);
+    const t4 = performance.now();
+    return buildRecord({
+      mode: "ask", question, chunks, sentences, claims, verdicts, threshold, k,
+      timings: { retrieve: t1 - t0, generate: t2 - t1, split: t3 - t2, verify: t4 - t3 },
+      model: "Demo generator", started: t0,
+    });
+  }
+
+  /** Audit: check any pasted answer against the whole library. */
+  function audit(answer, retriever, opts = {}) {
+    const t0 = performance.now();
+    const threshold = opts.threshold ?? 0.7;
+    const sentences = parseAnswer(answer);
+    const claims = extractClaims(sentences);
+    const t1 = performance.now();
+    const chunks = retriever.chunks;
+    const verdicts = verifyAll(claims, chunks, threshold);
+    const t2 = performance.now();
+    return buildRecord({
+      mode: "audit", question: "", chunks, sentences, claims, verdicts, threshold, k: chunks.length,
+      timings: { split: t1 - t0, verify: t2 - t1 }, model: "Pasted text", started: t0,
+    });
+  }
+
+  function buildRecord(o) {
+    const baseline = snap(o.sentences, o.claims, o.verdicts);
+    return {
+      answer_id: "q", question: o.question, split: "test",
+      config: { k: o.k, action: "remove", act_verifier: "lexical", verifiers: ["lexical"], llm: o.model, claim_mode: "rule", style: "strict" },
+      retrieved: o.chunks.map((c) => ({ id: c.id, doc: c.doc, text: c.text, score: c.score, rank: c.rank })),
+      baseline, final: removeFlagged(baseline, "lexical"), rounds: 0, abstained: false,
+      ui: {
+        engine: "browser", mode: o.mode, mock: o.mode === "ask", model: o.model, provider: o.mode === "ask" ? "Demo" : "Pasted",
+        action: "remove", act: "lexical", thresholds: { lexical: o.threshold }, timings: o.timings,
+        elapsed_ms: Math.round(Object.values(o.timings).reduce((a, b) => a + b, 0)), at: Date.now(),
+      },
+    };
+  }
+
+  /** The answer without sentences that contain a flagged claim. */
+  function removeFlagged(snapshot, act) {
+    const bad = new Set(snapshot.verdicts[act].filter((v) => v.label !== "supported").map((v) => v.claim_id));
+    const badS = new Set(snapshot.claims.filter((c) => bad.has(c.id)).map((c) => c.sentence_idx));
+    const sentences = snapshot.sentences.filter((s) => !badS.has(s.idx));
+    const claims = snapshot.claims.filter((c) => !badS.has(c.sentence_idx));
+    const ids = new Set(claims.map((c) => c.id));
+    const verdicts = {};
+    for (const [n, vs] of Object.entries(snapshot.verdicts)) verdicts[n] = vs.filter((v) => ids.has(v.claim_id));
+    return { answer: renderAnswer(sentences), sentences, claims, verdicts };
+  }
+
+  /** Re-score an existing record at a new threshold, without regenerating anything. */
+  function reverify(rec, threshold) {
+    const chunks = rec.retrieved.map((c) => ({ ...c }));
+    const verdicts = verifyAll(rec.baseline.claims, chunks, threshold);
+    const baseline = { ...rec.baseline, verdicts: { lexical: verdicts } };
+    return { ...rec, baseline, final: removeFlagged(baseline, "lexical"), ui: { ...rec.ui, thresholds: { lexical: threshold } } };
+  }
+
+
+  // ------------------------------------------------------------------ benchmark (planted errors)
+  /** One false variant of a true sentence. Returns null when the mutation does not apply. */
+  function mutate(kind, text, h) {
+    if (kind === "fabricate") return INJECTED_BANK[h % INJECTED_BANK.length];
+    if (kind === "number") return tamper(text);
+    if (kind === "entity") {
+      if (/\bH10\b/.test(text)) return text.replace(/\bH10\b/g, "H15");
+      if (/\bH15\b/.test(text)) return text.replace(/\bH15\b/g, "H10");
+      return null;
+    }
+    if (kind === "negate") {
+      let t = text.replace(/\b(must|does|do|is|are|can|will) not\b/i, "$1");
+      if (t !== text) return t;
+      t = text.replace(/\bhas no\b/i, "has a");
+      return t !== text ? t : null;
+    }
+    return null;
+  }
+  const MUTATIONS = ["fabricate", "number", "entity", "negate"];
+
+  /** For every question: the true sentences the demo generator picks (label 0) plus planted false variants (label 1). */
+  function benchBuild(questions, retriever, k = 5) {
+    const items = [];
+    for (const q of questions) {
+      const chunks = retriever.retrieve(q.question, k);
+      const gen = demoGenerate(q.question, chunks, retriever.bm25, { inject: false });
+      const sents = parseAnswer(gen.raw).filter((s) => !s.is_refusal && s.cited_ids.length);
+      if (!sents.length) continue;
+      const base = { qid: q.id, qkind: q.kind, chunks };
+      sents.forEach((s) => items.push({ ...base, text: s.text, cite: s.cited_ids, label: 0, mutation: null }));
+      const h = fnv(q.id);
+      for (const kind of MUTATIONS) {
+        for (const s of [...sents].reverse()) {
+          const t = mutate(kind, s.text, h);
+          if (t) { items.push({ ...base, text: t, cite: s.cited_ids, label: 1, mutation: kind }); break; }
+        }
+      }
+    }
+    return items;
+  }
+  /** Flag decision for every item at each threshold. */
+  function benchScore(items, thresholds) {
+    const out = {};
+    for (const t of thresholds) {
+      out[t] = items.map((it) => {
+        const claims = extractClaims([{ idx: 0, text: it.text, cited_ids: it.cite, is_refusal: false }]);
+        return verifyAll(claims, it.chunks, t).some((v) => v.label !== "supported");
+      });
+    }
+    return out;
+  }
+
+  root.TLEngine = {
+    tokenize, splitSentences, parseAnswer, parseSentence, extractClaims, atomicClaims, loadCorpus, chunkDocument,
+    Retriever, verifyAll, demoGenerate, ask, audit, reverify, removeFlagged, fnv, INJECTED_BANK,
+    benchBuild, benchScore, MUTATIONS,
+  };
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+<script>
+/* TruthLens UI. No framework, no build step. Text is always set with textContent / text nodes, never innerHTML. */
+(() => {
+  "use strict";
+  const E = window.TLEngine, DATA = window.TL_DATA;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "style") for (const [p, x] of Object.entries(v)) el.style.setProperty(p, x);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat(3)) {
+      if (kid == null || kid === false) continue;
+      el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+  const ICONS = {
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>', flag: '<path d="M6 21V4M6 4h11l-2.5 4L17 12H6"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>',
+    dash: '<path d="M7 12h10"/>', sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/>',
+    moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
+    trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+    chat: '<path d="M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-4 3.5V16H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8.5 9.5h7M8.5 12.5h4"/>',
+    filecheck: '<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v4h4M9 14.5l2.2 2.2L15.5 12"/>',
+    folder: '<path d="M3.5 7a1.5 1.5 0 0 1 1.5-1.5h4l2 2.5h8A1.5 1.5 0 0 1 20.5 9.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/>',
+    pulse: '<path d="M3 12h4l2.5-6 4 12 2.5-6H21"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8v.01"/>', menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+    search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>', help: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M10.5 10h.01M14 10h.01M17 10h.01M8 14h8"/>',
+    panel: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>',
+    upload: '<path d="M12 16V4M7.5 8.5L12 4l4.5 4.5M5 20h14"/>', open: '<path d="M5 12h14M13 6l6 6-6 6"/>', share: '<path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 14v6h14v-6"/>',
+  };
+  const ico = (n) => { const s = h("span", { class: "ico", "aria-hidden": "true" }); s.innerHTML = `<svg viewBox="0 0 24 24" focusable="false">${ICONS[n]}</svg>`; return s; };
+
+  const STATUS = {
+    supported: { title: "Backed by the sources", short: "Backed", icon: "check" },
+    unsupported: { title: "Not in the sources", short: "Not in sources", icon: "flag" },
+    contradicted: { title: "Contradicted by the sources", short: "Contradicted", icon: "x" },
+    none: { title: "Not a factual claim", short: "Not a claim", icon: "dash" },
+  };
+  const SCORE_LABEL = { lexical: "Word match", embedding: "Meaning match", nli: "Entailment", llm_judge: "Judge confidence" };
+  const VERIFIER_NAME = { lexical: "Lexical match", embedding: "Embedding similarity", nli: "NLI model", llm_judge: "LLM judge" };
+
+  // ------------------------------------------------------------------ storage
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("truthlens." + k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } },
+    set(k, v) { try { localStorage.setItem("truthlens." + k, JSON.stringify(v)); return true; } catch (_) { return false; } },
+  };
+  function toast(msg, undo) {
+    const t = $("#toast"); t.replaceChildren(h("span", {}, msg)); t.hidden = false;
+    if (undo) t.append(h("button", { type: "button", onclick: () => { t.hidden = true; undo(); } }, "Undo"));
+    clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, undo ? 7000 : 2200);
+  }
+  async function copyText(text, ok = "Copied") {
+    try { await navigator.clipboard.writeText(text); toast(ok); return; } catch (_) { /* fall through */ }
+    const ta = h("textarea", { "aria-hidden": "true" }); ta.value = text; ta.style.setProperty("position", "fixed"); ta.style.setProperty("opacity", "0");
+    document.body.append(ta); ta.select();
+    let done = false; try { done = document.execCommand("copy"); } catch (_) { /* ignore */ }
+    ta.remove(); toast(done ? ok : "Copy isn't available here. Select the text and copy it yourself.");
+  }
+  const embedded = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+
+  // ------------------------------------------------------------------ state
+  const DEFAULTS = { engine: "browser", threshold: 0.7, k: 5, llm: "auto", verifiers: ["lexical"], act: "lexical", action: "remove", style: "strict", claim_mode: "rule", density: "comfortable" };
+  const S = {
+    settings: { ...DEFAULTS, ...store.get("settings", {}) },
+    docs: null, chunks: [], retriever: null,
+    meta: null, server: false,
+    history: store.get("history", []),
+  };
+  S.docs = store.get("docs", null) || DATA.docs.map((d) => ({ ...d, sample: true }));
+  function rebuildIndex() {
+    S.chunks = E.loadCorpus(S.docs);
+    S.retriever = new E.Retriever(S.chunks);
+  }
+  rebuildIndex();
+  const saveSettings = () => store.set("settings", S.settings);
+  const useServer = () => S.server && S.settings.engine === "server";
+
+  async function api(path, body) {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 120000);
+    try {
+      const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: ctl.signal });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || `The server answered with status ${r.status}.`);
+      return data;
+    } catch (e) {
+      if (e.name === "AbortError") throw new Error("The server took too long to answer. Try again, or use fewer verifiers.");
+      throw e;
+    } finally { clearTimeout(to); }
+  }
+  const serverSettings = () => {
+    const s = S.settings;
+    return { llm: s.llm, verifiers: s.verifiers, act: s.act, action: s.action, style: s.style, claim_mode: s.claim_mode, k: s.k };
+  };
+  async function runAsk(question) {
+    if (useServer()) {
+      const rec = await api("/api/ask", { question, settings: serverSettings() });
+      rec.ui = { ...rec.ui, engine: "server", mode: "ask", at: Date.now() };
+      return rec;
+    }
+    await sleep(0);
+    return E.ask(question, S.retriever, { k: S.settings.k, threshold: S.settings.threshold });
+  }
+  async function runAudit(text) {
+    if (useServer()) {
+      const rec = await api("/api/verify", { answer: text, settings: serverSettings() });
+      rec.ui = { ...rec.ui, engine: "server", mode: "audit", at: Date.now() };
+      return rec;
+    }
+    await sleep(0);
+    return E.audit(text, S.retriever, { threshold: S.settings.threshold });
+  }
+
+  // ------------------------------------------------------------------ record helpers
+  const normText = (t) => t.replace(/\s+/g, " ").trim().toLowerCase();
+  function sentenceStatus(claims, vmap) {
+    if (!claims.length) return "none";
+    const labels = claims.map((c) => (vmap[c.id] ? vmap[c.id].label : "unsupported"));
+    if (labels.includes("contradicted")) return "contradicted";
+    return labels.some((l) => l !== "supported") ? "unsupported" : "supported";
+  }
+  function buildItems(snap, act, source) {
+    const by = {};
+    for (const [n, list] of Object.entries(snap.verdicts)) by[n] = Object.fromEntries(list.map((v) => [v.claim_id, v]));
+    const bySent = {};
+    for (const c of snap.claims) (bySent[c.sentence_idx] = bySent[c.sentence_idx] || []).push(c);
+    return snap.sentences.map((s, pos) => {
+      const claims = bySent[s.idx] || [];
+      return { key: `${source}:${s.idx}`, source, pos, total: snap.sentences.length, sentence: s, claims, by, status: sentenceStatus(claims, by[act] || {}) };
+    });
+  }
+  function summarize(rec) {
+    const act = rec.ui.act;
+    const items = buildItems(rec.baseline, act, "base");
+    const vs = items.flatMap((it) => it.claims.map((c) => (it.by[act] || {})[c.id] || { label: "unsupported" }));
+    const n = vs.length;
+    const c = { supported: 0, unsupported: 0, contradicted: 0 };
+    vs.forEach((v) => { c[v.label] = (c[v.label] || 0) + 1; });
+    return { items, n, counts: c, flagged: n - c.supported, vs };
+  }
+  function locate(passage, win) {
+    const needle = (win || "").replace(/\s+/g, " ").trim().toLowerCase();
+    if (needle.length < 8) return null;
+    let norm = ""; const map = []; let space = false;
+    for (let i = 0; i < passage.length; i++) {
+      if (/\s/.test(passage[i])) { if (!space && norm) { norm += " "; map.push(i); } space = true; }
+      else { norm += passage[i].toLowerCase(); map.push(i); space = false; }
+    }
+    const at = norm.indexOf(needle);
+    if (at < 0) return null;
+    return [map[at], map[at + needle.length - 1] + 1];
+  }
+  const windowOf = (v) => v.window || ((/window:\s*([\s\S]+)$/.exec(v.rationale || "") || [])[1] || "");
+
+  /** The claim's words, with those the evidence does not contain marked. */
+  function claimWithGaps(text, win) {
+    const have = new Set(E.tokenize(win));
+    const out = [];
+    for (const part of text.split(/([A-Za-z0-9][A-Za-z0-9.,'’-]*)/)) {
+      if (!part) continue;
+      const toks = /^[A-Za-z0-9]/.test(part) ? E.tokenize(part) : [];
+      if (toks.length && toks.some((t) => !have.has(t))) out.push(h("span", { class: "gap" }, part));
+      else out.push(part);
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------------ report export
+  function markdownReport(rec) {
+    const sum = summarize(rec); const act = rec.ui.act;
+    const lines = ["# TruthLens report", ""];
+    if (rec.question) lines.push(`**Question:** ${rec.question}`, "");
+    lines.push(`**Result:** ${sum.counts.supported} of ${sum.n} claims backed by the sources (${(rec.ui.thresholds || {})[act] ?? "n/a"} strictness, ${VERIFIER_NAME[act] || act}).`, "");
+    lines.push("| Sentence | Verdict | Score | Evidence |", "|---|---|---|---|");
+    for (const it of sum.items) {
+      for (const c of it.claims) {
+        const v = (it.by[act] || {})[c.id]; if (!v) continue;
+        lines.push(`| ${c.text.replace(/\|/g, "\\|")} | ${STATUS[v.label].short} | ${v.support_score.toFixed(2)} | ${v.evidence_id || "none"} |`);
+      }
+    }
+    lines.push("", "_Checked with TruthLens._");
+    return lines.join("\n");
+  }
+
+  // ------------------------------------------------------------------ Result component
+  class Result {
+    constructor(mount, kind) { this.mount = mount; this.kind = kind; this.rec = null; this.view = "generated"; this.sel = null; this.root = null; this.filter = "all"; }
+    clear() { this.rec = null; this.mount.replaceChildren(); }
+    fail(message) {
+      this.rec = null;
+      this.mount.replaceChildren(h("section", { class: "failure", role: "alert" }, h("h2", {}, "Couldn't check this"), h("p", {}, message)));
+    }
+    async show(rec, { animate = true, scroll = false } = {}) {
+      this.rec = rec; this.view = "generated"; this.sel = null; this.filter = "all";
+      this.build();
+      this.refresh(animate);
+      if (scroll) this.mount.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "start" });
+      if (animate) await this.playPipeline();
+    }
+    /** Fixed skeleton, so controls that live in it (the strictness slider) are never replaced while in use. */
+    build() {
+      this.pipeEl = h("ol", { class: "pipeline", "aria-label": "Steps this check went through" });
+      this.headEl = h("div", { class: "verdict-head" });
+      this.docEl = h("div", { class: "doc", id: `${this.kind}-doc` });
+      this.ev = h("div", { class: "ev" });
+      this.rail = h("aside", { class: "rail", "aria-label": "Evidence", id: `${this.kind}-rail` }, this.ev);
+      if (this.rec.ui.engine === "browser") this.rail.append(this.strictness());
+      this.ledgerEl = h("div"); this.sourcesEl = h("div");
+      this.mount.replaceChildren(h("section", { "aria-labelledby": `${this.kind}-ttl` },
+        h("h2", { class: "sr", id: `${this.kind}-ttl` }, "Result"), this.pipeEl, this.headEl,
+        h("div", { class: "workspace" }, this.docEl, this.rail), this.ledgerEl, this.sourcesEl));
+    }
+    stages() {
+      const rec = this.rec, sum = summarize(rec), t = rec.ui.timings || {}, mode = rec.ui.mode;
+      const fmt = (ms) => (ms == null ? "" : ms < 1 ? "<1 ms" : `${Math.round(ms)} ms`);
+      const list = [];
+      if (mode === "ask") {
+        list.push(["Retrieve", `${rec.retrieved.length} passages`, fmt(t.retrieve)]);
+        list.push(["Write answer", `${rec.baseline.sentences.length} ${rec.baseline.sentences.length === 1 ? "sentence" : "sentences"}`, fmt(t.generate)]);
+      }
+      list.push(["Split into claims", `${sum.n} ${sum.n === 1 ? "claim" : "claims"}`, fmt(t.split)]);
+      list.push(["Verify", `${sum.flagged} flagged`, fmt(t.verify)]);
+      const removed = rec.baseline.sentences.length - rec.final.sentences.length;
+      list.push(["Fix answer", rec.ui.action === "flag" ? "flag only" : `${removed} removed`, rec.ui.timings ? "" : fmt(rec.ui.elapsed_ms)]);
+      return list;
+    }
+    async playPipeline() {
+      const els = $$(".stage", this.mount);
+      const marks = $$(".row-btn .mark[data-final]", this.mount);
+      const reveal = (m) => {
+        m.dataset.s = m.dataset.final; const l = m.closest(".row-btn")?.querySelector(".line"); if (l) l.dataset.s = m.dataset.final;
+        $$(`.seg[data-sent="${m.dataset.sent}"]`, this.mount).forEach((g) => { g.dataset.s = g.dataset.final; });
+      };
+      if (reduceMotion()) { els.forEach((e) => (e.dataset.on = "1")); marks.forEach(reveal); return; }
+      for (let i = 0; i < els.length; i++) { await sleep(130); if (!els[i].isConnected) return; els[i].dataset.on = "1"; }
+      for (const m of marks) { await sleep(170); if (!m.isConnected) return; reveal(m); }
+    }
+
+    draw(pending = false) { this.refresh(pending); }
+    refresh(pending = false) {
+      const rec = this.rec; if (!rec) return;
+      const sum = summarize(rec), act = rec.ui.act;
+      this.sum = sum;
+      const flagged = sum.flagged, n = sum.n;
+      const title = n === 0 ? "Nothing to check here" : flagged === 0 ? (n === 1 ? "The claim is backed by the sources" : `All ${n} claims are backed by the sources`)
+        : `${flagged} of ${n} ${n === 1 ? "claim isn't" : "claims aren't"} backed by the sources`;
+
+      const view = this.view;
+      const baseItems = sum.items;
+      const finalItems = buildItems(rec.final, act, "final");
+      const keepIdx = new Set(rec.final.sentences.map((s) => s.idx));
+      const removedItems = baseItems.filter((it) => !keepIdx.has(it.sentence.idx) && rec.ui.action !== "flag").map((it) => ({ ...it, key: `removed:${it.sentence.idx}`, source: "removed" }));
+      const main = view === "verified" ? finalItems : baseItems;
+      const navList = view === "verified" ? [...finalItems, ...removedItems] : baseItems;
+      const all = view === "compare" ? [...baseItems, ...finalItems] : navList;
+      this.navList = navList;
+      if (!this.sel || !all.some((i) => i.key === this.sel)) {
+        const firstFlag = all.find((i) => i.status === "unsupported" || i.status === "contradicted");
+        this.sel = (firstFlag || all.find((i) => i.status !== "none") || all[0] || {}).key || null;
+      }
+      this.all = all;
+
+      // header
+      const strip = h("div", { class: "strip", role: "list", "aria-label": "Verdict for each claim" });
+      sum.items.forEach((it) => it.claims.forEach((c) => {
+        const v = (it.by[act] || {})[c.id]; const label = v ? v.label : "unsupported";
+        strip.append(h("button", { class: "seg", type: "button", role: "listitem", "data-s": pending ? "pending" : label, "data-final": label, "data-sent": it.sentence.idx, "data-key": it.key,
+          title: c.text, "aria-label": `Claim: ${STATUS[label].short}. ${c.text}`, "aria-current": it.key === this.sel ? "true" : null,
+          onclick: () => { if (this.view !== "generated") { this.view = "generated"; this.sel = it.key; this.refresh(); } else this.pick(it.key, true); } }));
+      }));
+      const legend = h("ul", { class: "legend" },
+        ["supported", "unsupported", "contradicted"].filter((k) => sum.counts[k] || k === "supported").map((k) =>
+          h("li", {}, h("span", { class: "pill", "data-s": k }, ico(STATUS[k].icon), STATUS[k].short), h("b", {}, sum.counts[k] || 0))));
+      const tabs = h("div", { class: "seg-ctl", role: "tablist", "aria-label": "Answer version" },
+        ["generated", "verified", "compare"].map((k) => h("button", { type: "button", role: "tab", "aria-selected": String(view === k), onclick: () => { this.view = k; this.sel = null; this.refresh(); } },
+          { generated: "As written", verified: "After fixing", compare: "Side by side" }[k])));
+      this.headEl.replaceChildren(
+        h("div", {}, h("h2", { class: `verdict-title ${n && !flagged ? "good" : "bad"}` }, title), strip, legend),
+        h("div", { class: "toolbar" }, tabs, this.exportMenu()));
+
+      // pipeline
+      this.pipeEl.replaceChildren(...this.stages().map(([a, b, c]) => h("li", { class: "stage", "data-on": pending ? "0" : "1" }, h("b", {}, a), h("span", {}, b), c ? h("i", {}, c) : null)));
+
+      // document
+      const doc = this.docEl; doc.replaceChildren();
+      if (rec.question) doc.append(h("p", { class: "doc-q" }, "You asked", h("b", {}, rec.question)));
+      if (view === "compare") {
+        doc.append(h("div", { class: "compare" },
+          h("div", {}, h("h3", {}, "As written"), h("ol", { class: "sentences" }, baseItems.map((it) => this.row(it, false)))),
+          h("div", {}, h("h3", {}, "After fixing"), finalItems.length ? h("ol", { class: "sentences" }, finalItems.map((it) => this.row(it, false))) : h("p", { class: "abstain" }, "Nothing is left once flagged sentences are removed."))));
+      } else if (!main.length) doc.append(h("p", { class: "abstain" }, "The sources do not contain enough information to answer this question."));
+      else doc.append(h("ol", { class: "sentences" }, main.map((it) => this.row(it, pending && view === "generated"))));
+      if (view === "verified" && removedItems.length) {
+        doc.append(h("div", { class: "removed" }, h("h3", {}, rec.rounds > 0 ? "Replaced or removed" : "Removed from the answer"),
+          h("ol", { class: "sentences" }, removedItems.map((it) => this.row(it, false, true)))));
+      }
+      doc.append(h("div", { class: "doc-foot" },
+        h("span", {}, "Select a sentence to see its evidence. ", h("kbd", {}, "↑"), " ", h("kbd", {}, "↓"), " moves between sentences."),
+        h("button", { class: "btn quiet small", type: "button", onclick: () => this.copyAnswer() }, ico("copy"), view === "verified" ? "Copy fixed answer" : "Copy answer")));
+
+      this.drawRail();
+      this.ledgerEl.replaceChildren(this.ledger(sum, act));
+      this.sourcesEl.replaceChildren(this.sources());
+      this.markSources();
+    }
+
+    row(item, pending, removed = false) {
+      const label = STATUS[item.status].short;
+      const s = item.status;
+      const cites = (item.sentence.cited_ids || []).map((id) => h("span", { class: "cite" }, id));
+      const mark = h("span", { class: "mark", "aria-hidden": "true", "data-s": pending ? "pending" : s, "data-final": s, "data-sent": item.sentence.idx }, ico(STATUS[s].icon));
+      const line = h("span", { class: "line", "data-s": removed ? "removed" : pending ? "none" : s }, item.sentence.text, cites);
+      return h("li", {}, h("button", { class: "row-btn", type: "button", "data-key": item.key, "aria-pressed": String(item.key === this.sel),
+        onclick: () => this.pick(item.key, true) }, mark, h("span", {}, h("span", { class: "sr" }, `${label}. `), line)));
+    }
+
+    pick(key, user) {
+      this.sel = key;
+      if (this.view === "generated" && key.startsWith("removed")) this.view = "verified";
+      $$(".row-btn", this.mount).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.key === key)));
+      $$(".seg", this.mount).forEach((b) => { if (b.dataset.key === key) b.setAttribute("aria-current", "true"); else b.removeAttribute("aria-current"); });
+      $$(".ledger tbody tr", this.mount).forEach((r) => r.setAttribute("aria-selected", String(r.dataset.key === key)));
+      this.drawRail();
+      this.markSources();
+      if (user && window.matchMedia("(max-width: 980px)").matches) this.rail.scrollIntoView({ behavior: reduceMotion() ? "auto" : "smooth", block: "nearest" });
+    }
+
+    move(delta) {
+      const list = this.navList || this.all; if (!list.length) return;
+      const i = Math.max(0, Math.min(list.length - 1, list.findIndex((x) => x.key === this.sel) + delta));
+      this.pick(list[i].key, false);
+      const b = $(`.row-btn[data-key="${CSS.escape(list[i].key)}"]`, this.mount); if (b) b.focus({ preventScroll: false });
+    }
+
+    currentItem() { return (this.all || []).find((i) => i.key === this.sel) || null; }
+
+    drawRail() {
+      const rail = this.ev; const item = this.currentItem();
+      rail.replaceChildren();
+      if (!item) { rail.append(h("div", { class: "card" }, h("p", { class: "muted" }, "Select a sentence to see the evidence behind it."))); return; }
+      const st = STATUS[item.status];
+      const where = item.source === "removed" ? "Removed from the final answer." : `Sentence ${item.pos + 1} of ${item.total}.`;
+      if (item.status === "none") {
+        rail.append(h("div", { class: "card" }, h("div", { class: "rail-head" }, h("span", { class: "mark", "data-s": "none" }, ico("dash")), h("div", {}, h("h3", {}, st.title), h("p", {}, where))),
+          h("p", { class: "note" }, "This sentence doesn't state a fact, so there's nothing to check. Refusals like “the sources do not say” are left alone.")));
+      } else item.claims.forEach((c) => rail.append(this.claimCard(item, c, st, where)));
+    }
+
+    claimCard(item, claim, st, where) {
+      const rec = this.rec, act = rec.ui.act;
+      const v = (item.by[act] || {})[claim.id];
+      const label = v ? v.label : "unsupported";
+      const card = h("div", { class: "card" });
+      card.append(h("div", { class: "rail-head" }, h("span", { class: "mark", "data-s": label }, ico(STATUS[label].icon)), h("div", {}, h("h3", {}, STATUS[label].title), h("p", {}, where))));
+      if (!v) return card;
+      const win = windowOf(v);
+      const showGaps = label !== "supported" && win;
+      if (item.claims.length > 1 || normText(claim.text) !== normText(item.sentence.text) || showGaps)
+        card.append(h("p", { class: "claim-text" }, showGaps ? claimWithGaps(claim.text, win) : `“${claim.text}”`));
+      if (showGaps) card.append(h("p", { class: "gap-note" }, label === "contradicted" ? "Underlined words don't appear in the passage below." : "Underlined words don't appear in the closest passage."));
+
+      const t = (rec.ui.thresholds || {})[act];
+      const fill = Math.max(0, Math.min(1, v.support_score));
+      const gauge = h("div", { class: "gauge" },
+        h("div", { class: "gauge-top" }, h("span", {}, SCORE_LABEL[v.verifier] || "Score"), h("b", {}, v.support_score.toFixed(2))),
+        h("div", { class: "gauge-bar", style: { "--v": fill, "--t": t ?? 0 } }, h("div", { class: "gauge-fill", "data-s": label }), t != null ? h("div", { class: "gauge-tick", title: `Needs ${t.toFixed(2)}` }) : null),
+        h("div", { class: "gauge-cap" }, h("span", {}, "0"), t != null ? h("span", {}, `Backed at ${t.toFixed(2)} or higher`) : h("span", {}, `${VERIFIER_NAME[v.verifier] || v.verifier}`), h("span", {}, "1")));
+      card.append(gauge);
+
+      const chunk = v.evidence_id ? rec.retrieved.find((c) => c.id === v.evidence_id) : null;
+      if (chunk) {
+        const heading = chunk.text.includes("\n") ? chunk.text.split("\n")[0] : "";
+        const body = heading ? chunk.text.split("\n").slice(1).join(" ") : chunk.text;
+        const span = locate(body, win);
+        const para = h("p", { class: "passage" });
+        if (heading) para.append(h("span", { class: "h" }, heading));
+        if (span) para.append(body.slice(0, span[0]), h("mark", {}, body.slice(span[0], span[1])), body.slice(span[1]));
+        else para.append(body);
+        card.append(h("div", { class: "src-head" }, label === "contradicted" ? "Passage that says otherwise" : label === "supported" ? "Evidence" : "Closest passage, which doesn't back it up",
+          h("span", { class: "doc-name" }, chunk.doc), h("span", { class: "chip-id" }, chunk.id)), para);
+      } else card.append(h("p", { class: "note" }, "No passage came close to this claim."));
+
+      if (claim.cited_ids && claim.cited_ids.length && v.cited_ok != null && chunk) {
+        card.append(v.cited_ok ? h("p", { class: "note" }, `The answer cited ${claim.cited_ids.join(", ")}, and that's where the support is.`)
+          : h("p", { class: "note warn" }, `The answer cited ${claim.cited_ids.join(", ")}, but the closest passage is ${chunk.id}. Citation error.`));
+      }
+      const others = Object.keys(item.by).filter((n) => n !== act && item.by[n][claim.id]);
+      if (others.length) {
+        card.append(h("table", { class: "vtable" }, h("tbody", {}, [act, ...others].map((n) => { const x = item.by[n][claim.id];
+          return h("tr", {}, h("th", {}, VERIFIER_NAME[n] || n), h("td", {}, h("span", { class: "pill", "data-s": x.label }, ico(STATUS[x.label].icon), STATUS[x.label].short)), h("td", {}, x.support_score.toFixed(2))); }))));
+      }
+      return card;
+    }
+
+    strictness() {
+      const rec = this.rec; const t = rec.ui.thresholds.lexical;
+      const out = h("output", {}, t.toFixed(2));
+      const input = h("input", { type: "range", id: `${this.kind}-strict`, min: "0.3", max: "0.95", step: "0.05", value: String(t),
+        "aria-describedby": `${this.kind}-strict-d`,
+        oninput: (e) => { const val = parseFloat(e.target.value); out.textContent = val.toFixed(2); cancelAnimationFrame(this._raf); this._raf = requestAnimationFrame(() => this.rescore(val)); } });
+      return h("div", { class: "card strict" }, h("label", { for: `${this.kind}-strict` }, "Strictness", out), input,
+        h("small", { id: `${this.kind}-strict-d` }, "How much of a claim's wording and numbers must appear in one passage. Raise it to flag more, lower it to flag less. Re-scores instantly."));
+    }
+    rescore(val) {
+      const keep = this.sel; this.rec = E.reverify(this.rec, val);
+      S.settings.threshold = val; saveSettings();
+      this.sel = keep; this.refresh(false);
+    }
+
+    copyAnswer() {
+      const snap = this.view === "verified" ? this.rec.final : this.rec.baseline;
+      const text = snap.sentences.map((x) => x.text).join(" ");
+      copyText(text || "The sources do not contain enough information to answer this question.", this.view === "verified" ? "Fixed answer copied" : "Answer copied");
+    }
+
+    ledger(sum, act) {
+      const rows = [];
+      sum.items.forEach((it) => it.claims.forEach((c) => {
+        const v = (it.by[act] || {})[c.id]; if (!v) return;
+        if (this.filter !== "all" && v.label !== this.filter) return;
+        rows.push(h("tr", { "data-key": it.key, "aria-selected": String(it.key === this.sel), onclick: () => { this.view = "generated"; this.sel = it.key; this.refresh(); } },
+          h("td", {}, c.text), h("td", {}, h("span", { class: "pill", "data-s": v.label }, ico(STATUS[v.label].icon), STATUS[v.label].short)),
+          h("td", { class: "num" }, v.support_score.toFixed(2)), h("td", {}, v.evidence_id ? h("span", { class: "chip-id" }, v.evidence_id) : "none"),
+          h("td", {}, v.cited_ok == null ? "No citation" : v.cited_ok ? "Correct" : "Wrong source")));
+      }));
+      if (!sum.n) return h("div");
+      const opts = [["all", "All", sum.n], ["supported", "Backed", sum.counts.supported], ["unsupported", "Not in sources", sum.counts.unsupported], ["contradicted", "Contradicted", sum.counts.contradicted]].filter((o) => o[0] === "all" || o[2]);
+      const filters = h("div", { class: "filters", role: "group", "aria-label": "Filter claims" }, opts.map(([k, l, c]) =>
+        h("button", { type: "button", "aria-pressed": String(this.filter === k), onclick: () => { this.filter = k; this.ledgerEl.replaceChildren(this.ledger(this.sum, act)); } }, `${l} ${c}`)));
+      return h("div", {}, h("h3", { class: "section-title" }, "Claim by claim", opts.length > 2 ? filters : null),
+        h("div", { class: "table-wrap" }, h("table", { class: "ledger" },
+          h("thead", {}, h("tr", {}, h("th", {}, "Claim"), h("th", {}, "Verdict"), h("th", { class: "num" }, SCORE_LABEL[act] || "Score"), h("th", {}, "Evidence"), h("th", {}, "Citation"))),
+          h("tbody", {}, rows.length ? rows : h("tr", {}, h("td", { colspan: "5" }, "No claims with this verdict."))))));
+    }
+
+    sources() {
+      const rec = this.rec; const act = rec.ui.act; const sum = this.sum;
+      const cited = new Set(); const evidence = new Set();
+      sum.items.forEach((it) => { (it.sentence.cited_ids || []).forEach((i) => cited.add(i)); it.claims.forEach((c) => { const v = (it.by[act] || {})[c.id]; if (v && v.evidence_id) evidence.add(v.evidence_id); }); });
+      let list = rec.retrieved;
+      const audit = rec.ui.mode === "audit";
+      if (audit) list = list.filter((c) => evidence.has(c.id) || cited.has(c.id));
+      if (!list.length) return h("div");
+      const max = Math.max(...list.map((c) => c.score || 0), 0.0001);
+      const cards = list.map((c) => {
+        const heading = c.text.includes("\n") ? c.text.split("\n")[0] : "";
+        const body = heading ? c.text.split("\n").slice(1).join(" ") : c.text;
+        const card = h("div", { class: "source", "data-id": c.id },
+          h("div", { class: "source-top" }, h("span", { class: "chip-id" }, c.id), h("span", { class: "doc-name" }, heading ? `${c.doc} · ${heading}` : c.doc),
+            cited.has(c.id) ? h("span", { class: "tag" }, "cited") : null, h("span", { class: "tag on", "data-evid": "1", hidden: true }, "evidence")),
+          c.score != null ? h("div", { class: "rankbar", title: `Retrieval score ${c.score}` }, h("i", { style: { "--v": (c.score || 0) / max } })) : null,
+          h("p", {}, body));
+        const b = h("button", { class: "more", type: "button", onclick: () => { card.classList.toggle("open"); b.textContent = card.classList.contains("open") ? "Show less" : "Read all"; } }, "Read all");
+        if (body.length > 220) card.append(b);
+        return card;
+      });
+      this.srcCards = cards;
+      const title = audit ? "Passages used" : `Passages retrieved (${list.length})`;
+      const wrap = h("div", {}, h("h3", { class: "section-title" }, title), h("div", { class: "sources" }, cards));
+      setTimeout(() => this.markSources(), 0);
+      return wrap;
+    }
+    markSources() {
+      const item = this.currentItem(); const act = this.rec.ui.act;
+      const ids = new Set();
+      if (item) item.claims.forEach((c) => { const v = (item.by[act] || {})[c.id]; if (v && v.evidence_id) ids.add(v.evidence_id); });
+      $$(".source", this.mount).forEach((el) => { const on = ids.has(el.dataset.id); el.classList.toggle("hot", on); const t = $("[data-evid]", el); if (t) t.hidden = !on; });
+    }
+
+    exportMenu() {
+      const wrapEl = h("div", { class: "menu" });
+      const btn = h("button", { class: "btn small", type: "button", "aria-haspopup": "menu", "aria-expanded": "false" }, ico("share"), "Share");
+      let pop = null;
+      const close = () => { if (pop) { pop.remove(); pop = null; btn.setAttribute("aria-expanded", "false"); document.removeEventListener("click", away, true); } };
+      const away = (e) => { if (pop && !wrapEl.contains(e.target)) close(); };
+      const item = (label, fn) => h("button", { type: "button", role: "menuitem", onclick: () => { close(); fn(); } }, label);
+      btn.addEventListener("click", () => {
+        if (pop) return close();
+        pop = h("div", { class: "menu-pop", role: "menu" },
+          item("Copy report as Markdown", () => copyText(markdownReport(this.rec), "Report copied")),
+          item("Copy as JSON", () => copyText(JSON.stringify(this.rec, null, 2), "JSON copied")),
+          embedded ? null : item("Download JSON", () => download("truthlens-result.json", JSON.stringify(this.rec, null, 2))));
+        wrapEl.append(pop); btn.setAttribute("aria-expanded", "true"); document.addEventListener("click", away, true);
+      });
+      wrapEl.append(btn); return wrapEl;
+    }
+  }
+    function download(name, text) {
+    try { const a = h("a", { href: URL.createObjectURL(new Blob([text], { type: "application/json" })), download: name }); document.body.append(a); a.click(); a.remove(); } catch (_) { copyText(text, "JSON copied"); }
+  }
+
+  // ------------------------------------------------------------------ ASK view
+  const askResult = new Result($("#ask-result"), "ask");
+  const auditResult = new Result($("#audit-result"), "audit");
+  const QUESTIONS = DATA.questions;
+  const FEATURED = ["q005", "q013", "q003", "q021", "q017", "q009"];
+  const KIND_NAME = { answerable: "Answerable", partial: "Only partly answerable", unanswerable: "Not in the documents", false_premise: "False premise" };
+
+  function renderChips() {
+    const box = $("#chips"); box.replaceChildren();
+    FEATURED.map((id) => QUESTIONS.find((q) => q.id === id)).filter(Boolean).forEach((q) =>
+      box.append(h("button", { class: "chip", type: "button", onclick: () => { $("#question").value = q.question; submitAsk(); } }, q.question)));
+    box.append(h("button", { class: "chip more", type: "button", onclick: openQuestions }, `All ${QUESTIONS.length} questions`));
+    box.append(h("button", { class: "chip more", type: "button", onclick: () => { const q = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]; $("#question").value = q.question; submitAsk(); } }, "Surprise me"));
+  }
+  function openQuestions() {
+    const body = $("#qd-body"); body.replaceChildren();
+    for (const kind of Object.keys(KIND_NAME)) {
+      const qs = QUESTIONS.filter((q) => q.kind === kind); if (!qs.length) continue;
+      body.append(h("div", { class: "qgroup" }, h("h3", {}, KIND_NAME[kind]), qs.map((q) =>
+        h("button", { class: "chip", type: "button", onclick: () => { $("#qdialog").close(); setView("ask"); $("#question").value = q.question; submitAsk(); } }, q.question))));
+    }
+    $("#qdialog").showModal();
+  }
+
+  let busy = false;
+  function setBusy(btn, on, idle) { btn.disabled = on; btn.textContent = on ? "Checking…" : idle; }
+  async function submitAsk() {
+    const q = $("#question").value.trim(); if (!q || busy) return;
+    busy = true; setBusy($("#ask-btn"), true, "Check answer");
+    if (useServer()) askResult.mount.replaceChildren(h("div", { class: "skeleton", "aria-label": "Checking" }, h("i", {}), h("i", {}), h("i", {})));
+    try {
+      const rec = await runAsk(q); saveHistory(rec); await askResult.show(rec, { animate: true, scroll: true });
+    } catch (e) { askResult.fail(friendly(e)); } finally { busy = false; setBusy($("#ask-btn"), false, "Check answer"); }
+  }
+  const friendly = (e) => (e instanceof TypeError ? "Couldn't reach the Python server. Switch to the browser engine in Settings, or start server.py again." : e.message || String(e));
+  $("#ask-form").addEventListener("submit", (e) => { e.preventDefault(); submitAsk(); });
+
+  // ------------------------------------------------------------------ AUDIT view
+  const AUDIT_EXAMPLES = [
+    ["Marketing blurb", "The Helio H10 has 10 kWh of usable capacity and weighs 98 kg. It comes with a 15-year standard warranty. The enclosure is rated IP55. Helio ships to 40 countries."],
+    ["Support reply", "Yes, you can install it in a bedroom as long as there is a smoke detector within 3 m. The unit needs a dedicated 32 A circuit breaker. Phone support is open 24 hours a day."],
+    ["Warranty summary", "The standard warranty lasts 10 years and starts on the day you buy the battery. Extended coverage to 15 years costs 4 percent of the purchase price. The battery supports 5G for remote monitoring."],
+  ];
+  function renderAuditUi() {
+    const ex = $("#audit-examples"); ex.replaceChildren(h("span", { class: "muted" }, "Try an example:"));
+    AUDIT_EXAMPLES.forEach(([name, text]) => ex.append(h("button", { class: "chip", type: "button", onclick: () => { $("#audit-text").value = text; submitAudit(); } }, name)));
+    const list = $("#against-list"); list.replaceChildren();
+    S.docs.forEach((d) => list.append(h("li", {}, h("b", {}, d.name), h("span", {}, `${S.chunks.filter((c) => c.doc === d.name).length} passages`))));
+    if (!S.docs.length) list.append(h("li", {}, "No documents yet."));
+  }
+  async function submitAudit() {
+    const text = $("#audit-text").value.trim(); if (!text || busy) return;
+    busy = true; setBusy($("#audit-btn"), true, "Check text");
+    try {
+      if (!S.chunks.length && !useServer()) throw new Error("There are no documents to check against. Add one on the Documents page.");
+      const rec = await runAudit(text); saveHistory(rec); await auditResult.show(rec, { animate: true, scroll: true });
+    } catch (e) { auditResult.fail(friendly(e)); } finally { busy = false; setBusy($("#audit-btn"), false, "Check text"); }
+  }
+  $("#audit-form").addEventListener("submit", (e) => { e.preventDefault(); submitAudit(); });
+
+  // ------------------------------------------------------------------ LIBRARY view
+  let libSel = null;
+  function persistDocs() { S.docs.sort((a, b) => (a.name < b.name ? -1 : 1)); store.set("docs", S.docs); rebuildIndex(); renderAuditUi(); renderLibrary(); renderNav(); }
+  function renderLibrary() {
+    const root = $("#lib"); root.replaceChildren();
+    if (!S.docs.find((d) => d.name === libSel)) libSel = S.docs[0] ? S.docs[0].name : null;
+    const left = h("div", {});
+    const list = h("ul", { class: "doc-list" }, S.docs.map((d) => {
+      const n = S.chunks.filter((c) => c.doc === d.name).length;
+      return h("li", {}, h("button", { class: "doc-item", type: "button", "aria-pressed": String(d.name === libSel), onclick: () => { libSel = d.name; renderLibrary(); } },
+        h("b", {}, d.name), h("span", {}, `${n} passages, ${d.text.split(/\s+/).filter(Boolean).length} words${d.sample ? "" : ", yours"}`)));
+    }));
+    if (!S.docs.length) list.append(h("li", {}, h("p", { class: "muted" }, "No documents yet. Add one below.")));
+    const nameIn = h("input", { type: "text", id: "new-name", placeholder: "pricing-faq.md", autocomplete: "off" });
+    const textIn = h("textarea", { id: "new-text", placeholder: "Paste text. Lines starting with # become passage headings." });
+    const addDoc = (name, text) => {
+      name = (name || "").trim().replace(/[^\w.\- ]+/g, "") || "document.md"; if (!/\.(md|txt)$/i.test(name)) name += ".md";
+      if (!text.trim()) { toast("Add some text first."); return; }
+      S.docs = S.docs.filter((d) => d.name !== name); S.docs.push({ name, text: text.trim(), sample: false }); libSel = name; persistDocs(); toast(`Added ${name}`);
+    };
+    const fileIn = h("input", { type: "file", id: "file-in", accept: ".md,.txt,text/plain,text/markdown", multiple: true, class: "sr" });
+    const readFiles = (files) => Array.from(files).forEach((f) => { if (f.size > 400000) { toast(`${f.name} is too large (400 KB max).`); return; } const r = new FileReader(); r.onload = () => addDoc(f.name, String(r.result)); r.readAsText(f); });
+    fileIn.addEventListener("change", () => readFiles(fileIn.files));
+    const drop = h("label", { class: "drop", for: "file-in" }, ico("upload"), h("span", {}, "Drop .md or .txt files here, or choose files"));
+    ["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); if (ev === "drop") readFiles(e.dataTransfer.files); }));
+    left.append(h("h2", { class: "h-sm" }, "Files"), list, h("div", { class: "card" }, h("h2", { class: "h-sm" }, "Add a document"),
+      drop, fileIn, h("div", { class: "field", style: { "margin-top": "12px" } }, h("label", { for: "new-name" }, "Name"), nameIn),
+      h("div", { class: "field" }, h("label", { for: "new-text" }, "Text"), textIn),
+      h("button", { class: "btn primary small", type: "button", onclick: () => { addDoc(nameIn.value, textIn.value); } }, ico("plus"), "Add document")),
+      h("p", {}, h("button", { class: "btn quiet small", type: "button", onclick: () => { S.docs = DATA.docs.map((d) => ({ ...d, sample: true })); libSel = null; persistDocs(); toast("Sample documents restored"); } }, "Restore the samples")));
+
+    const right = h("div", {});
+    const doc = S.docs.find((d) => d.name === libSel);
+    if (doc) {
+      right.append(h("div", { class: "row", style: { margin: "0 0 12px", "justify-content": "space-between" } }, h("h2", { class: "h-sm", style: { margin: "0" } }, `${doc.name}, as the checker sees it`),
+        S.docs.length ? h("button", { class: "btn quiet small", type: "button", onclick: () => { const gone = doc; S.docs = S.docs.filter((d) => d.name !== gone.name); persistDocs(); toast(`Removed ${gone.name}`, () => { S.docs.push(gone); libSel = gone.name; persistDocs(); }); } }, ico("trash"), "Remove") : null));
+      right.append(h("div", { class: "chunk-list" }, S.chunks.filter((c) => c.doc === doc.name).map((c) => {
+        const heading = c.text.includes("\n") ? c.text.split("\n")[0] : ""; const body = heading ? c.text.split("\n").slice(1).join(" ") : c.text;
+        return h("div", { class: "chunk" }, h("h4", {}, h("span", { class: "chip-id" }, c.id), heading || "No heading"), h("p", {}, body));
+      })));
+    } else right.append(h("div", { class: "empty" }, h("h3", {}, "No documents"), h("p", {}, "Add a document or restore the samples to start asking questions.")));
+
+    const q = h("input", { type: "text", id: "tester-q", placeholder: "Type a question to see which passages rank first", autocomplete: "off" });
+    const out = h("div", {});
+    const run = () => {
+      out.replaceChildren(); const text = q.value.trim(); if (!text || !S.chunks.length) return;
+      const hits = S.retriever.retrieve(text, 5);
+      hits.forEach((c) => { const heading = c.text.includes("\n") ? c.text.split("\n")[0] : ""; out.append(h("div", { class: "hit" }, h("span", { class: "sc" }, c.score.toFixed(2)),
+        h("p", {}, h("span", { class: "chip-id" }, c.id), " ", h("b", {}, `${c.doc}${heading ? ` · ${heading}` : ""}`), " ", (c.text.includes("\n") ? c.text.split("\n").slice(1).join(" ") : c.text).slice(0, 180)))); });
+    };
+    q.addEventListener("input", run);
+    right.append(h("div", { class: "card tester" }, h("h2", { class: "h-sm" }, "Test retrieval"), h("div", { class: "field" }, h("label", { class: "sr", for: "tester-q" }, "Question"), q), out));
+    root.append(left, right);
+  }
+
+  // ------------------------------------------------------------------ STRESS TEST view
+  let benchData = null;
+  async function runBench() {
+    const btn = $("#bench-run"); btn.disabled = true; btn.textContent = "Running…"; await sleep(30);
+    try {
+      const items = E.benchBuild(QUESTIONS, S.retriever, S.settings.k);
+      const grid = []; for (let t = 0.3; t <= 0.951; t += 0.05) grid.push(Math.round(t * 100) / 100);
+      const scores = E.benchScore(items, grid);
+      benchData = { items, grid, scores, at: Date.now() };
+      renderBench();
+    } finally { btn.disabled = false; btn.textContent = "Run again"; }
+  }
+  function prf(items, flags) {
+    let tp = 0, fp = 0, fn = 0, tn = 0;
+    items.forEach((it, i) => { if (it.label && flags[i]) tp++; else if (!it.label && flags[i]) fp++; else if (it.label) fn++; else tn++; });
+    const p = tp + fp ? tp / (tp + fp) : 0, r = tp + fn ? tp / (tp + fn) : 0;
+    return { tp, fp, fn, tn, p, r, f1: p + r ? (2 * p * r) / (p + r) : 0 };
+  }
+  const MUT_NAME = { fabricate: "Invented fact", number: "Changed number", entity: "Swapped model (H10 and H15)", negate: "Flipped negation" };
+  function renderBench() {
+    const out = $("#bench-out"); out.replaceChildren(); if (!benchData) return;
+    const { items, grid, scores } = benchData; const t0 = S.settings.threshold;
+    const near = grid.reduce((a, b) => (Math.abs(b - t0) < Math.abs(a - t0) ? b : a));
+    const m = prf(items, scores[near]);
+    const pct = (x) => `${Math.round(x * 100)}%`;
+    out.append(h("div", { class: "grid4" },
+      h("div", { class: "metric" }, h("b", {}, pct(m.p)), h("span", {}, `Precision: of ${m.tp + m.fp} sentences flagged, ${m.tp} were really false`)),
+      h("div", { class: "metric" }, h("b", {}, pct(m.r)), h("span", {}, `Recall: caught ${m.tp} of ${m.tp + m.fn} planted errors`)),
+      h("div", { class: "metric" }, h("b", {}, m.f1.toFixed(2)), h("span", {}, `F1 at strictness ${near.toFixed(2)}`)),
+      h("div", { class: "metric" }, h("b", {}, String(items.length)), h("span", {}, `Sentences tested, ${items.filter((i) => i.label).length} of them false`))));
+
+    // recall by kind
+    const kinds = E.MUTATIONS.map((k) => {
+      const idx = items.map((it, i) => (it.mutation === k ? i : -1)).filter((i) => i >= 0);
+      const hit = idx.filter((i) => scores[near][i]).length;
+      return { k, n: idx.length, hit };
+    });
+    const bars = h("div", { class: "bars" }, kinds.map(({ k, n, hit }) => {
+      const v = n ? hit / n : 0;
+      return h("div", { class: "bar-row" }, h("span", {}, MUT_NAME[k]), h("div", { class: "track" }, h("i", { style: { "--v": v }, "data-lo": v < 0.5 ? "1" : "0" })), h("span", { class: "val" }, `${hit} of ${n} caught`));
+    }));
+    const WEAK = { fabricate: "invented facts", number: "changed numbers", entity: "a swapped model name", negate: "flipped negations" };
+    const weak = kinds.filter((x) => x.n && x.hit / x.n < 0.5).map((x) => WEAK[x.k]);
+    if (weak.length) out.append(h("div", { class: "callout" }, h("b", {}, "Blind spot."), h("p", {}, `The lexical checker misses ${weak.join(" and ")}. It compares words and numbers, so a sentence that reuses the right words with a wrong subject still passes. The NLI and LLM-judge verifiers in the Python server are built for this case.`)));
+    out.append(h("h3", { class: "section-title", style: { "margin-top": "0" } }, "What gets caught"), h("div", { class: "chart-card" }, bars));
+    out.append(h("h3", { class: "section-title" }, "Strictness trade-off"), h("div", { class: "chart-card" }, sweepChart(items, grid, scores, near)));
+    out.append(h("p", { class: "muted", style: { maxWidth: "78ch" } }, "The truth is known here because we planted the errors ourselves, so this checks that the pipeline works. It doesn't estimate accuracy on real model answers. For that, label your own answers with the steps in the README."));
+  }
+  function sweepChart(items, grid, scores, cur) {
+    const W = 760, Ht = 280, L = 44, R = 70, T = 14, B = 40;
+    const x = (t) => L + ((t - grid[0]) / (grid[grid.length - 1] - grid[0])) * (W - L - R), y = (v) => T + (1 - v) * (Ht - T - B);
+    const NS = "http://www.w3.org/2000/svg";
+    const el = (n, a, ...k) => { const e = document.createElementNS(NS, n); for (const [kk, v] of Object.entries(a || {})) e.setAttribute(kk, v); k.forEach((c) => e.append(c)); return e; };
+    const svg = el("svg", { viewBox: `0 0 ${W} ${Ht}`, role: "img", "aria-label": "Precision, recall and F1 as strictness changes from 0.3 to 0.95" });
+    for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+      svg.append(el("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: "var(--line-soft)", "stroke-width": 1 }));
+      const t = el("text", { x: L - 8, y: y(v) + 4, "text-anchor": "end" }); t.textContent = v.toFixed(2).replace(/0$/, ""); svg.append(t);
+    }
+    grid.filter((_, i) => i % 2 === 0).forEach((tt) => { const t = el("text", { x: x(tt), y: Ht - B + 20, "text-anchor": "middle" }); t.textContent = tt.toFixed(2); svg.append(t); });
+    const ax = el("text", { x: (L + W - R) / 2, y: Ht - 4, "text-anchor": "middle" }); ax.textContent = "Strictness"; svg.append(ax);
+    const series = [["Precision", "p", "var(--ink-2)"], ["Recall", "r", "var(--accent)"], ["F1", "f1", "var(--ok)"]];
+    const pts = grid.map((t) => prf(items, scores[t]));
+    const ends = [];
+    series.forEach(([name, key, col]) => {
+      const d = pts.map((p, i) => `${i ? "L" : "M"}${x(grid[i]).toFixed(1)},${y(p[key]).toFixed(1)}`).join(" ");
+      svg.append(el("path", { d, fill: "none", stroke: col, "stroke-width": key === "f1" ? 3 : 2, "stroke-linejoin": "round", "stroke-dasharray": key === "p" ? "6 4" : "none" }));
+      ends.push({ name, col, y: y(pts[pts.length - 1][key]) + 4 });
+    });
+    ends.sort((a, b) => a.y - b.y);
+    for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 17) ends[i].y = ends[i - 1].y + 17;
+    ends.forEach((e) => { const lab = el("text", { x: W - R + 8, y: e.y, class: "lab", style: `fill:${e.col}` }); lab.textContent = e.name; svg.append(lab); });
+    svg.append(el("line", { x1: x(cur), x2: x(cur), y1: T, y2: Ht - B, stroke: "var(--ink-3)", "stroke-width": 1, "stroke-dasharray": "2 3" }));
+    const cl = el("text", { x: x(cur), y: Ht - B - 8, "text-anchor": "middle" }); cl.textContent = "current strictness"; svg.append(cl);
+    return svg;
+  }
+  $("#bench-run").addEventListener("click", runBench);
+
+  // ------------------------------------------------------------------ HISTORY view
+  function saveHistory(rec) {
+    S.history.unshift({ id: Date.now() + Math.random().toString(36).slice(2, 6), at: Date.now(), rec });
+    S.history = S.history.slice(0, 25);
+    if (!store.set("history", S.history)) { S.history = S.history.slice(0, 8); store.set("history", S.history); }
+    if (typeof renderNav === "function" && current) { renderNav(); renderStats(); renderRecent(); }
+  }
+  const ago = (t) => { const s = Math.round((Date.now() - t) / 1000); if (s < 60) return "just now"; if (s < 3600) return `${Math.round(s / 60)} min ago`; if (s < 86400) return `${Math.round(s / 3600)} h ago`; return new Date(t).toLocaleDateString(); };
+  let histQuery = "", histMode = "all";
+  function commitHistory() { store.set("history", S.history); renderHistory(); renderNav(); renderStats(); renderRecent(); }
+  function renderHistory() {
+    const out = $("#history-out"), tools = $("#history-tools"); out.replaceChildren(); tools.replaceChildren();
+    if (!S.history.length) { out.append(h("div", { class: "empty" }, h("h3", {}, "Nothing checked yet"), h("p", {}, "Ask a question or check some text, and it will show up here."), h("a", { class: "btn primary", href: "#ask" }, "Ask a question"))); return; }
+    const q = h("input", { class: "search", type: "search", id: "hist-q", placeholder: "Search your checks", value: histQuery, "aria-label": "Search history", oninput: (e) => { histQuery = e.target.value; drawList(); } });
+    const modes = h("div", { class: "seg-ctl", role: "group", "aria-label": "Filter by type" }, [["all", "All"], ["ask", "Questions"], ["audit", "Pasted text"]].map(([k, l]) =>
+      h("button", { type: "button", "aria-selected": String(histMode === k), onclick: () => { histMode = k; renderHistory(); } }, l)));
+    tools.append(q, modes,
+      h("button", { class: "btn small", type: "button", onclick: () => copyText(JSON.stringify(S.history.map((e) => e.rec), null, 2), "History copied as JSON") }, ico("copy"), "Copy all as JSON"),
+      h("button", { class: "btn quiet small", type: "button", onclick: clearHistory }, ico("trash"), "Clear"));
+    const list = h("div", { class: "hist" }); out.append(list);
+    function drawList() {
+      list.replaceChildren();
+      const items = S.history.filter((e) => (histMode === "all" || e.rec.ui.mode === histMode) &&
+        (!histQuery || (e.rec.question + " " + e.rec.baseline.sentences.map((x) => x.text).join(" ")).toLowerCase().includes(histQuery.toLowerCase())));
+      if (!items.length) { list.append(h("div", { class: "empty" }, h("h3", {}, "No matches"), h("p", {}, "Try a different search or filter."))); return; }
+      items.forEach((e) => {
+        const sum = summarize(e.rec); const rec = e.rec;
+        const title = rec.question || rec.baseline.sentences.map((x) => x.text).join(" ").slice(0, 110);
+        list.append(h("div", { class: "hist-item" },
+          h("div", {}, h("h3", {}, title), h("p", {}, `${rec.ui.mode === "audit" ? "Pasted text" : "Question"}, ${sum.n} claims, ${sum.flagged} flagged, ${ago(e.at)}`),
+            h("div", { class: "mini", "aria-hidden": "true" }, sum.vs.map((v) => h("i", { "data-s": v.label })))),
+          h("div", { class: "hist-actions" },
+            h("button", { class: "btn small", type: "button", onclick: () => reopen(e) }, ico("open"), "Open"),
+            h("button", { class: "icon-btn", type: "button", "aria-label": "Delete this entry", onclick: () => { const at = S.history.indexOf(e); S.history = S.history.filter((x) => x.id !== e.id); commitHistory();
+              toast("Entry deleted", () => { S.history.splice(Math.min(at, S.history.length), 0, e); commitHistory(); }); } }, ico("trash")))));
+      });
+    }
+    drawList();
+  }
+  function clearHistory() {
+    if (!S.history.length) return;
+    const old = S.history; S.history = []; commitHistory();
+    toast("History cleared", () => { S.history = old; commitHistory(); });
+  }
+  function renderRecent() {
+    const box = $("#recent"); if (!box) return;
+    const list = S.history.slice(0, 4); box.hidden = !list.length; box.replaceChildren(); if (!list.length) return;
+    box.append(h("h2", { class: "h-sm" }, "Recent checks"), h("div", { class: "recent-list" }, list.map((e) => {
+      const sm = summarize(e.rec); const st = !sm.flagged ? "supported" : sm.counts.contradicted ? "contradicted" : "unsupported";
+      return h("button", { class: "recent-item", type: "button", onclick: () => reopen(e) },
+        h("span", {}, e.rec.question || "Pasted text: " + e.rec.baseline.sentences.map((x) => x.text).join(" ").slice(0, 80)),
+        h("span", { class: "pill", "data-s": st }, ico(STATUS[st].icon), sm.flagged ? `${sm.flagged} flagged` : "All backed"), h("small", {}, ago(e.at)));
+    })));
+  }
+  function reopen(e) {
+    const rec = e.rec;
+    if (rec.ui.mode === "audit") { $("#audit-text").value = rec.baseline.sentences.map((s) => s.raw).join(" "); setView("audit"); auditResult.show(rec, { animate: false }); }
+    else { $("#question").value = rec.question; setView("ask"); askResult.show(rec, { animate: false }); }
+  }
+
+  // ------------------------------------------------------------------ settings
+  const dlg = $("#settings");
+  function renderSettings() {
+    const body = $("#settings-body"); body.replaceChildren();
+    const s = S.settings;
+    const radio = (name, value, label, hint, checked, off) => h("label", { class: "opt", "data-off": off ? "1" : null },
+      h("input", { type: "radio", name, value, checked: checked || null, disabled: off || null }), h("span", {}, label, hint ? h("small", {}, hint) : null));
+    const group = (title, hint, ...kids) => h("div", { class: "group" }, h("h3", {}, title), hint ? h("p", { class: "hint" }, hint) : null, kids);
+    body.append(group("Engine", S.server ? "A Python server answered, so you can use the full pipeline." : "No Python server found, so everything runs in this page.",
+      radio("engine", "browser", "In this browser", "Demo answer writer and the lexical checker. Works offline.", s.engine === "browser" || !S.server),
+      radio("engine", "server", "Python server", S.server ? (S.meta.live_ready ? `Real model (${S.meta.label || S.meta.provider}) and every verifier` : "Demo model; add an API key to use a real one") : "Run python server.py to enable this.", s.engine === "server" && S.server, !S.server)));
+    body.append(group("Appearance", "Compact tightens the page margins.",
+      radio("density", "comfortable", "Comfortable", null, (s.density || "comfortable") === "comfortable"), radio("density", "compact", "Compact", null, s.density === "compact")));
+    body.append(group("Passages per question", "How many source passages the answer can draw on.",
+      h("div", { class: "strict" }, h("label", { for: "set-k" }, "Passages", h("output", { id: "set-k-out" }, String(s.k))), h("input", { type: "range", id: "set-k", min: "2", max: "10", step: "1", value: String(s.k) }))));
+    body.append(group("Default strictness", "Applies to new checks in the browser engine. You can also change it on any result.",
+      h("div", { class: "strict" }, h("label", { for: "set-t" }, "Strictness", h("output", { id: "set-t-out" }, s.threshold.toFixed(2))), h("input", { type: "range", id: "set-t", min: "0.3", max: "0.95", step: "0.05", value: String(s.threshold) }))));
+    if (S.server) {
+      const m = S.meta;
+      body.append(group("Python server options", "Used only when the engine is Python server.",
+        h("div", { class: "group" }, h("h3", {}, "Verifiers"), m.verifiers.map((v) => h("label", { class: "opt", "data-off": v.available ? null : "1" },
+          h("input", { type: "checkbox", name: "verifiers", value: v.name, checked: s.verifiers.includes(v.name) || null, disabled: !v.available || null }), h("span", {}, v.label, h("small", {}, v.available ? v.note : `Unavailable. ${v.note}`))))),
+        h("div", { class: "field" }, h("label", { for: "set-act" }, "Verifier that fixes the answer"), h("select", { id: "set-act" }, s.verifiers.map((n) => h("option", { value: n, selected: n === s.act || null }, VERIFIER_NAME[n] || n)))),
+        h("div", { class: "field" }, h("label", { for: "set-action" }, "When claims are flagged"), h("select", { id: "set-action" }, [["flag", "Only mark them"], ["remove", "Remove those sentences"], ["regenerate", "Ask the model to rewrite, then remove what's left"]].map(([v, l]) => h("option", { value: v, selected: v === s.action || null }, l)))),
+        h("div", { class: "field" }, h("label", { for: "set-style" }, "Answer style"), h("select", { id: "set-style" }, [["strict", "Strict: sources only"], ["permissive", "Permissive: may add background knowledge"]].map(([v, l]) => h("option", { value: v, selected: v === s.style || null }, l)))),
+        h("div", { class: "field" }, h("label", { for: "set-claims" }, "Claim splitting"), h("select", { id: "set-claims" }, [["rule", "Rules"], ["llm", "LLM"]].map(([v, l]) => h("option", { value: v, selected: v === s.claim_mode || null }, l))))));
+    }
+  }
+  function readSettings() {
+    const s = S.settings; const val = (id) => { const e = $(id, dlg); return e ? e.value : null; };
+    const eng = $('input[name="engine"]:checked', dlg); if (eng) s.engine = eng.value;
+    const den = $('input[name="density"]:checked', dlg); if (den) { s.density = den.value; document.body.dataset.density = den.value; }
+    s.k = parseInt(val("#set-k") || s.k, 10); s.threshold = parseFloat(val("#set-t") || s.threshold);
+    if (S.server) {
+      const vs = $$('input[name="verifiers"]:checked', dlg).map((i) => i.value); s.verifiers = vs.length ? vs : ["lexical"];
+      s.act = s.verifiers.includes(val("#set-act")) ? val("#set-act") : s.verifiers[0]; s.action = val("#set-action") || s.action; s.style = val("#set-style") || s.style; s.claim_mode = val("#set-claims") || s.claim_mode;
+    }
+    saveSettings(); updateEngineChip();
+  }
+  dlg.addEventListener("input", (e) => {
+    if (e.target.id === "set-k") $("#set-k-out", dlg).textContent = e.target.value;
+    if (e.target.id === "set-t") $("#set-t-out", dlg).textContent = parseFloat(e.target.value).toFixed(2);
+    if (e.target.name === "verifiers") { readSettings(); const keepScroll = $("#settings-body").scrollTop; renderSettings(); $("#settings-body").scrollTop = keepScroll; }
+  });
+  dlg.addEventListener("change", readSettings);
+  dlg.addEventListener("close", () => { readSettings(); renderBench(); });
+  $("#settings-reset").addEventListener("click", () => { S.settings = { ...DEFAULTS, engine: S.server && S.meta.live_ready ? "server" : "browser" }; saveSettings(); renderSettings(); updateEngineChip(); });
+  const openSettings = () => { renderSettings(); dlg.showModal(); };
+  $("#settings-btn").addEventListener("click", openSettings);
+  $("#engine-chip").addEventListener("click", openSettings);
+  function updateEngineChip() {
+    const chip = $("#engine-chip"), lab = $("#engine-label"); const srv = useServer();
+    chip.classList.toggle("server", srv);
+    lab.textContent = srv ? "Python server" : "Browser engine";
+    $("#engine-sub").textContent = srv ? (S.meta && S.meta.live_ready ? (S.meta.label || S.meta.provider || "Live model") : "Demo model") : "Runs on this page";
+    $("#ask-btn").title = srv ? "Runs the Python pipeline" : "Runs in this page";
+  }
+
+  // ------------------------------------------------------------------ theme
+  const themeBtn = $("#theme-btn"), settingsBtn = $("#settings-btn");
+  settingsBtn.append(ico("sliders"), h("span", {}, "Settings"));
+  function applyTheme(mode) {
+    const root = document.documentElement;
+    if (mode === "light" || mode === "dark") root.setAttribute("data-theme", mode); else root.removeAttribute("data-theme");
+    const dark = mode === "dark" || (mode !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    themeBtn.replaceChildren(ico(dark ? "sun" : "moon"), h("span", {}, dark ? "Light" : "Dark"));
+  }
+  let theme = store.get("theme", "system");
+  applyTheme(theme);
+  function toggleTheme() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark" || (!document.documentElement.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    theme = dark ? "light" : "dark"; store.set("theme", theme); applyTheme(theme);
+  }
+  themeBtn.addEventListener("click", toggleTheme);
+
+  // ------------------------------------------------------------------ sidebar collapse, palette, shortcuts
+  const collapseBtn = $("#collapse-btn"); collapseBtn.append(ico("panel"), h("span", {}, "Collapse"));
+  function applyCollapse(on, save = true) {
+    document.body.classList.toggle("side-collapsed", on); if (save) store.set("collapsed", on);
+    collapseBtn.setAttribute("aria-label", on ? "Expand sidebar" : "Collapse sidebar");
+  }
+  collapseBtn.addEventListener("click", () => applyCollapse(!document.body.classList.contains("side-collapsed")));
+  applyCollapse(!!store.get("collapsed", false), false);
+  $(".ico-slot").replaceWith(ico("search"));
+  $("#help-btn").append(ico("help"));
+  document.body.dataset.density = S.settings.density || "comfortable";
+
+  const pal = $("#palette"), palIn = $("#pal-input"), palList = $("#pal-list");
+  let palItems = [], palSel = 0;
+  const KIND_SHORT = { answerable: "Answerable", partial: "Partial", unanswerable: "Not in documents", false_premise: "False premise" };
+  function commands() {
+    const c = [];
+    NAV.filter(Boolean).forEach(([v, l, i]) => c.push({ g: "Go to", label: l, icon: i, run: () => setView(v) }));
+    c.push({ g: "Actions", label: "Run the stress test", icon: "pulse", run: () => { setView("benchmark"); runBench(); } });
+    c.push({ g: "Actions", label: "Switch theme", icon: "sun", run: toggleTheme });
+    c.push({ g: "Actions", label: "Open settings", icon: "sliders", run: () => openSettings() });
+    c.push({ g: "Actions", label: document.body.classList.contains("side-collapsed") ? "Expand sidebar" : "Collapse sidebar", icon: "panel", run: () => collapseBtn.click() });
+    c.push({ g: "Actions", label: "Show keyboard shortcuts", icon: "help", run: () => openHelp() });
+    if (S.history.length) c.push({ g: "Actions", label: "Clear history", icon: "trash", run: clearHistory });
+    QUESTIONS.forEach((q) => c.push({ g: "Ask a sample question", label: q.question, icon: "chat", hint: KIND_SHORT[q.kind], run: () => { setView("ask"); $("#question").value = q.question; submitAsk(); } }));
+    return c;
+  }
+  function drawPalette() {
+    const terms = palIn.value.toLowerCase().split(/\s+/).filter(Boolean);
+    palItems = commands().filter((c) => terms.every((t) => (c.label + " " + c.g).toLowerCase().includes(t))).slice(0, 40);
+    palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+    palList.replaceChildren(); let last = null;
+    if (!palItems.length) { palList.append(h("li", { class: "pal-empty" }, "Nothing matches. Try “warranty” or “stress”.")); return; }
+    palItems.forEach((c, i) => {
+      if (c.g !== last) { palList.append(h("li", { class: "pal-group", role: "presentation" }, c.g)); last = c.g; }
+      palList.append(h("li", { class: "pal-item", role: "option", id: `pal-${i}`, "aria-selected": String(i === palSel), onclick: () => runPalette(i) }, ico(c.icon), h("span", {}, c.label), c.hint ? h("small", {}, c.hint) : null));
+    });
+    palIn.setAttribute("aria-activedescendant", `pal-${palSel}`);
+  }
+  function runPalette(i) { const c = palItems[i]; if (!c) return; pal.close(); c.run(); }
+  function openPalette() { closeNav(); palIn.value = ""; palSel = 0; drawPalette(); if (!pal.open) pal.showModal(); palIn.focus(); }
+  palIn.addEventListener("input", () => { palSel = 0; drawPalette(); });
+  palIn.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); palSel = (palSel + (e.key === "ArrowDown" ? 1 : -1) + palItems.length) % (palItems.length || 1); drawPalette(); const el = $(`#pal-${palSel}`, palList); if (el) el.scrollIntoView({ block: "nearest" }); }
+    if (e.key === "Enter") { e.preventDefault(); runPalette(palSel); }
+  });
+  pal.addEventListener("click", (e) => { if (e.target === pal) pal.close(); });
+  $("#palette-btn").addEventListener("click", openPalette);
+  const helpDlg = $("#helpdialog");
+  function openHelp() {
+    const rows = [["Ctrl K or ⌘ K", "Open the command palette"], ["/", "Jump to the question or text box"], ["↑ and ↓", "Move between sentences in a result"], ["?", "Show this list"], ["Esc", "Close a dialog or the menu"]];
+    $("#help-body").replaceChildren(h("table", { class: "keys" }, h("tbody", {}, rows.map(([k, d]) => h("tr", {}, h("td", {}, h("kbd", {}, k)), h("td", {}, d))))));
+    helpDlg.showModal();
+  }
+  $("#help-btn").addEventListener("click", openHelp);
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target.tagName || "").toLowerCase(); const typing = tag === "input" || tag === "textarea" || tag === "select";
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); if (pal.open) pal.close(); else openPalette(); }
+    else if (e.key === "?" && !typing && !e.ctrlKey && !e.metaKey) { e.preventDefault(); openHelp(); }
+  });
+
+
+  // ------------------------------------------------------------------ overview stats
+  function renderStats() {
+    const box = $("#stats"); if (!box) return;
+    const runs = S.history.length;
+    let n = 0, flagged = 0;
+    S.history.forEach((e) => { const sm = summarize(e.rec); n += sm.n; flagged += sm.flagged; });
+    const cells = [["Documents", S.docs.length], ["Searchable passages", S.chunks.length], ["Checks run", runs], ["Claims flagged", n ? `${Math.round((flagged / n) * 100)}%` : "None yet"]];
+    box.replaceChildren(...cells.map(([l, v]) => h("div", { class: "stat" }, h("span", {}, l), h("b", {}, String(v)))));
+  }
+
+  // ------------------------------------------------------------------ about
+  function renderAbout() {
+    const out = $("#about-out"); if (out.childElementCount) return;
+    const sec = (title, ...kids) => h("section", {}, h("h2", {}, title), ...kids);
+    out.append(
+      sec("The pipeline", h("ol", { class: "flow" },
+        [["Retrieve", "BM25 ranks passages from your documents. Documents are split on headings and sentence boundaries."],
+         ["Write", "A model drafts an answer and cites passage ids like [c3]. A strict style allows sources only."],
+         ["Split", "Each sentence is cut into atomic claims, so a half-true sentence can't hide behind its true half."],
+         ["Verify", "Every claim is scored against short windows of evidence by one or more pluggable verifiers."],
+         ["Fix", "Flag the claim, drop its sentence, or ask the model to rewrite and check again."]]
+          .map(([a, b]) => h("li", {}, h("b", {}, a), h("span", {}, b))))),
+      sec("Verifiers", h("div", { class: "table-wrap" }, h("table", { class: "data" },
+        h("thead", {}, h("tr", {}, ["Verifier", "How it decides", "Needs", "Weak spot"].map((x) => h("th", {}, x)))),
+        h("tbody", {}, [
+          ["Lexical match", "Word and number overlap with the best evidence window, plus a negation check.", "Nothing. Runs in this page.", "Paraphrase and swapped names."],
+          ["Embedding similarity", "Sentence-embedding similarity between claim and evidence window.", "sentence-transformers", "Similar wording with a different fact."],
+          ["NLI model", "Does the evidence window entail the claim? Also detects contradiction.", "torch and transformers", "Evidence spread over distant sentences."],
+          ["LLM judge", "A language model rules on the claim given the retrieved evidence.", "An API key (free tiers work)", "Cost, latency and judge bias."],
+        ].map((r) => h("tr", {}, r.map((x, i) => h(i ? "td" : "th", {}, x)))))))),
+      h("div", { class: "cols" },
+        h("section", { class: "card" }, h("h2", {}, "Design decisions"), h("ul", {},
+          h("li", {}, "One record format for the browser and Python engines, so a single UI renders both."),
+          h("li", {}, "Claims are verified in windows of up to three sentences, so evidence must be local, not somewhere in a long passage."),
+          h("li", {}, "Citations are audited too: a supported claim that cites the wrong passage is reported."),
+          h("li", {}, "The stress test plants known errors, which gives ground truth without hand labelling."))),
+        h("section", { class: "card" }, h("h2", {}, "Known limits"), h("ul", {},
+          h("li", {}, "The lexical checker misses a sentence that reuses the right words with a wrong subject. The stress test shows this."),
+          h("li", {}, "Number handling is token based. “Ten” and “10” differ, and units aren't converted."),
+          h("li", {}, "Removal works per sentence, so one bad claim removes its whole sentence."),
+          h("li", {}, "The browser demo writer isn't a language model. Use the Python server for real answers."))),
+        h("section", { class: "card" }, h("h2", {}, "Built with"), h("ul", {},
+          h("li", {}, "Python 3 standard-library server and pipeline, no framework"),
+          h("li", {}, "Vanilla JavaScript front end, no build step, one self-contained HTML file"),
+          h("li", {}, "pytest suite covering the pipeline, verifiers, API and static serving"),
+          h("li", {}, "Optional models: Claude, Groq, Gemini, OpenRouter, sentence-transformers, NLI")))),
+      sec("Run it", h("pre", { class: "code" }, "python server.py              # the app at http://127.0.0.1:8000\npython scripts/build_web.py  # rebuild the single-file site in dist/\npython -m pytest             # run the tests")));
+  }
+
+  // ------------------------------------------------------------------ router + keys
+  const NAV = [
+    ["ask", "Ask", "chat"], ["audit", "Check text", "filecheck"], ["library", "Documents", "folder"], ["benchmark", "Stress test", "pulse"],
+    ["history", "History", "clock"], null, ["about", "How it works", "info"],
+  ];
+  const VIEWS = NAV.filter(Boolean).map((n) => n[0]);
+  const TITLES = Object.fromEntries(NAV.filter(Boolean).map((n) => [n[0], n[1]]));
+  function renderNav() {
+    const nav = $("#nav"); nav.replaceChildren();
+    NAV.forEach((n) => {
+      if (!n) { nav.append(h("div", { class: "nav-sep", role: "separator" })); return; }
+      const a = h("a", { href: "#" + n[0], "data-view": n[0], title: n[1], onclick: () => closeNav() }, ico(n[2]), h("span", {}, n[1]));
+      if (n[0] === "history" && S.history.length) a.append(h("span", { class: "count" }, String(S.history.length)));
+      if (n[0] === "library") a.append(h("span", { class: "count" }, String(S.docs.length)));
+      nav.append(a);
+    });
+    $$("#nav a").forEach((a) => { if (a.dataset.view === current) a.setAttribute("aria-current", "page"); });
+  }
+  let current = null;
+  function openNav() { document.body.classList.add("nav-open"); $("#scrim").hidden = false; $("#menu-btn").setAttribute("aria-expanded", "true"); }
+  function closeNav() { document.body.classList.remove("nav-open"); $("#scrim").hidden = true; $("#menu-btn").setAttribute("aria-expanded", "false"); }
+  $("#menu-btn").append(ico("menu"));
+  $("#menu-btn").addEventListener("click", () => (document.body.classList.contains("nav-open") ? closeNav() : openNav()));
+  $("#scrim").addEventListener("click", closeNav);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeNav(); });
+  function setView(v) {
+    if (!VIEWS.includes(v)) v = "ask";
+    if (location.hash !== "#" + v) { history.replaceState(null, "", "#" + v); }
+    show(v);
+  }
+  function show(v) {
+    current = v;
+    $$(".view").forEach((s) => { s.hidden = s.dataset.view !== v; });
+    $("#crumb").textContent = TITLES[v];
+    document.title = v === "ask" ? "TruthLens" : `${TITLES[v]} · TruthLens`;
+    if (v === "history") renderHistory();
+    if (v === "library") renderLibrary();
+    if (v === "audit") renderAuditUi();
+    if (v === "benchmark") renderBench();
+    if (v === "about") renderAbout();
+    if (v === "ask") { renderStats(); renderRecent(); }
+    renderNav(); closeNav();
+    window.scrollTo({ top: 0 });
+  }
+  window.addEventListener("hashchange", () => show(VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "ask"));
+  document.addEventListener("keydown", (e) => {
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (e.key === "/" && tag !== "input" && tag !== "textarea" && !e.metaKey && !e.ctrlKey) { const i = current === "audit" ? $("#audit-text") : $("#question"); if (i) { e.preventDefault(); i.focus(); } }
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && (current === "ask" || current === "audit") && tag !== "input" && tag !== "textarea" && tag !== "select" && !dlg.open) {
+      const r = current === "ask" ? askResult : auditResult;
+      if (r.rec && r.all) { e.preventDefault(); r.move(e.key === "ArrowDown" ? 1 : -1); }
+    }
+  });
+
+  // ------------------------------------------------------------------ boot
+  async function detectServer() {
+    if (location.protocol === "file:") return;
+    try {
+      const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 1500);
+      const r = await fetch("/api/meta", { signal: ctl.signal }); clearTimeout(to);
+      if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return;
+      S.meta = await r.json(); S.server = true;
+      if (store.get("settings", null) == null) S.settings.engine = S.meta.live_ready ? "server" : "browser";
+      if (!S.meta.verifiers.find((v) => v.name === S.settings.act && v.available)) { S.settings.verifiers = ["lexical"]; S.settings.act = "lexical"; }
+    } catch (_) { /* no server: the browser engine is enough */ }
+  }
+
+  renderChips(); renderAuditUi(); renderLibrary();
+  const start = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "ask";
+  show(start);
+  $("#question").value = "What do the H10 and the installation cost?";
+  updateEngineChip();
+  detectServer().then(updateEngineChip);
+  // open with a finished example so the page shows what it does
+  if (start === "ask") { runAsk($("#question").value).then((rec) => askResult.show(rec, { animate: true })).catch(() => {}); }
+  else if (start === "audit") { $("#audit-text").value = AUDIT_EXAMPLES[2][1]; runAudit($("#audit-text").value).then((r) => auditResult.show(r, { animate: false })).catch(() => {}); }
+  window.__truthlens = { S, askResult, auditResult, E };
+})();
+
+</script>

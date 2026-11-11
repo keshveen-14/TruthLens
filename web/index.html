@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>TruthLens</title>
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <meta name="description" content="Check every sentence of an AI answer against its sources, and see the exact passage behind each verdict.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..650&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/data.js" defer></script>
+  <script src="/engine.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <div class="app">
+    <aside class="side" id="side" aria-label="Main">
+      <a class="brand" href="#ask" aria-label="TruthLens home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="14" cy="14" r="9.5" fill="none" stroke="currentColor" stroke-width="2.6"/>
+          <path d="M21.5 21.5L28 28" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M9.6 14.2l3.2 3.2 5.6-6.2" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="brand-name">TruthLens</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="Sections"></nav>
+      <div class="side-foot">
+        <button class="engine" id="engine-chip" type="button" aria-haspopup="dialog">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="engine-text"><b id="engine-label">Browser engine</b><small id="engine-sub">Runs on this page</small></span>
+        </button>
+        <div class="side-row">
+          <button class="side-btn" id="theme-btn" type="button"></button>
+          <button class="side-btn" id="settings-btn" type="button" aria-haspopup="dialog"></button>
+          <button class="side-btn collapse-btn" id="collapse-btn" type="button" aria-label="Collapse sidebar"></button>
+        </div>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <div class="main-col">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Open menu" aria-controls="side" aria-expanded="false"></button>
+        <div class="crumbs"><span class="crumb-root">TruthLens</span><span class="crumb-sep" aria-hidden="true">/</span><b id="crumb">Ask</b></div>
+        <div class="top-actions">
+          <button class="palette-btn" id="palette-btn" type="button" aria-haspopup="dialog"><span class="ico-slot"></span><span>Search or jump to</span><kbd>Ctrl K</kbd></button>
+          <button class="icon-btn" id="help-btn" type="button" aria-label="Keyboard shortcuts"></button>
+        </div>
+      </header>
+
+      <main id="main" class="page">
+        <!-- ASK -->
+        <section class="view" id="view-ask" data-view="ask" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Ask a question</h1>
+              <p>TruthLens writes a cited answer from your documents, splits it into claims, and checks each one against the sources.</p>
+            </div>
+          </div>
+          <div class="stats" id="stats" aria-label="Workspace summary"></div>
+          <form class="composer" id="ask-form" autocomplete="off">
+            <label class="sr" for="question">Your question</label>
+            <input class="ask-input" id="question" name="question" type="text" maxlength="500" placeholder="Ask about the Helio Home Battery" required>
+            <button class="btn primary" id="ask-btn" type="submit">Check answer</button>
+          </form>
+          <div class="chips" id="chips" role="group" aria-label="Sample questions"></div>
+          <div id="ask-result" class="result-mount"></div>
+          <div class="recent" id="recent" hidden></div>
+        </section>
+
+        <!-- AUDIT -->
+        <section class="view" id="view-audit" data-view="audit" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Check text</h1>
+              <p>Paste an answer from any chatbot, report or email and check it against your documents. In the browser engine nothing leaves this page.</p>
+            </div>
+          </div>
+          <div class="audit-grid">
+            <form class="audit-form card" id="audit-form">
+              <label class="field-label" for="audit-text">Answer to check</label>
+              <textarea id="audit-text" class="paper-input" rows="6" maxlength="6000" placeholder="Paste the answer here. Citations like [c3] are optional." required></textarea>
+              <div class="row">
+                <button class="btn primary" type="submit" id="audit-btn">Check text</button>
+                <div class="examples" id="audit-examples" role="group" aria-label="Example answers"></div>
+              </div>
+            </form>
+            <aside class="against card" aria-label="Documents used">
+              <h2 class="h-sm">Checked against</h2>
+              <ul id="against-list" class="against-list"></ul>
+              <a class="link" href="#library">Manage documents</a>
+            </aside>
+          </div>
+          <div id="audit-result" class="result-mount"></div>
+        </section>
+
+        <!-- LIBRARY -->
+        <section class="view" id="view-library" data-view="library" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Documents</h1>
+              <p>Answers and checks use only these files. Add your own, or restore the fictional Helio samples.</p>
+            </div>
+          </div>
+          <div class="lib" id="lib"></div>
+        </section>
+
+        <!-- BENCHMARK -->
+        <section class="view" id="view-benchmark" data-view="benchmark" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Stress test</h1>
+              <p>For each of the 30 sample questions the demo writes a true answer, then we plant false variants: an invented fact, a changed number, a swapped model, a flipped negation. The checker never sees which is which.</p>
+            </div>
+            <div class="head-actions"><button class="btn primary" id="bench-run" type="button">Run stress test</button></div>
+          </div>
+          <div id="bench-out"></div>
+        </section>
+
+        <!-- HISTORY -->
+        <section class="view" id="view-history" data-view="history" hidden>
+          <div class="page-head">
+            <div>
+              <h1>History</h1>
+              <p>Your last checks, saved in this browser only.</p>
+            </div>
+          </div>
+          <div class="tools" id="history-tools"></div>
+          <div id="history-out"></div>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="view" id="view-about" data-view="about" hidden>
+          <div class="page-head">
+            <div>
+              <h1>How it works</h1>
+              <p>A retrieval-augmented answer pipeline with a hallucination detector on the end. Every claim in an answer is checked before anyone relies on it.</p>
+            </div>
+          </div>
+          <div id="about-out" class="about"></div>
+        </section>
+
+        <footer class="foot">
+          <p>Sample documents describe a fictional product. In the browser engine the answer writer is a demo that plants false sentences on purpose, and the checker is the lexical baseline from the Python pipeline.</p>
+        </footer>
+      </main>
+    </div>
+  </div>
+
+  <dialog class="sheet" id="settings" aria-labelledby="settings-title">
+    <form method="dialog" class="sheet-form" id="settings-form">
+      <div class="sheet-head">
+        <h2 id="settings-title">Settings</h2>
+        <button class="btn quiet small" value="close" aria-label="Close settings">Close</button>
+      </div>
+      <div class="sheet-body" id="settings-body"></div>
+      <div class="sheet-foot">
+        <button class="btn quiet" type="button" id="settings-reset">Reset to defaults</button>
+        <button class="btn primary" value="done">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="qdialog" aria-labelledby="qd-title">
+    <form method="dialog" class="sheet-form">
+      <div class="sheet-head"><h2 id="qd-title">Sample questions</h2><button class="btn quiet small" value="close">Close</button></div>
+      <div class="sheet-body" id="qd-body"></div>
+    </form>
+  </dialog>
+
+  <dialog class="palette" id="palette" aria-label="Command palette">
+    <input class="pal-input" id="pal-input" type="text" placeholder="Search pages, sample questions and actions" autocomplete="off" aria-controls="pal-list">
+    <ul class="pal-list" id="pal-list" role="listbox"></ul>
+  </dialog>
+
+  <dialog class="sheet" id="helpdialog" aria-labelledby="help-title">
+    <form method="dialog" class="sheet-form">
+      <div class="sheet-head"><h2 id="help-title">Keyboard shortcuts</h2><button class="btn quiet small" value="close">Close</button></div>
+      <div class="sheet-body" id="help-body"></div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Core: the pipeline, the evaluation harness, the web UI and the tests run on the standard library plus these
+anthropic>=0.40       # only for Claude; Groq, Gemini and OpenRouter need no package
+pytest>=8
+# streamlit>=1.35     # only for the older app.py demo; the web UI (server.py) needs nothing extra
